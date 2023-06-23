@@ -4,7 +4,7 @@ rule collect_cas:
     input:
         "{region}/results/{isolate}.fasta/cas_operons.tab"
         "{region}/metadata.csv"
-        "{region}ngstar.csv"
+        "{region}/ngstar.csv"
     output:
         "crisprcasgenes.csv"
         "crisprcassystems.csv"
@@ -20,7 +20,7 @@ rule collect_nested_cas:
     input:
         "{region}/{subregion}/results/{isolate}.fasta/cas_operons.tab"
         "{region}/metadata.csv"
-        "{region}ngstar.csv"
+        "{region}/ngstar.csv"
     output:
         "crisprcasgenes.csv"
         "crisprcassystems.csv"
