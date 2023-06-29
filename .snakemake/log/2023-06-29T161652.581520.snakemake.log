@@ -1,0 +1,33 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Conda environments: ignored
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+collate_metadata        1              1              1
+total                   1              1              1
+
+Select jobs to execute...
+
+[Thu Jun 29 16:16:52 2023]
+rule collate_metadata:
+    input: ngbin/africaasiaspain/metadata.csv, ngbin/aus/metadata.csv, ngbin/nz/metadata.csv, ngbin/denmark/metadata.csv, ngbin/nordic/metadata.csv, ngbin/southerneurope/metadata.csv, ngbin/uknorth/metadata.csv, ngbin/uksouth/metadata.csv, ngbin/1983/metadata.csv, ngbin/2013/metadata.csv, ngbin/2019/metadata.csv, ngbin/2020/metadata.csv, ngbin/sa/metadata.csv, ngbin/hawaii/metadata.csv, ngbin/africaasiaspain/ngstar.csv, ngbin/aus/ngstar.csv, ngbin/nz/ngstar.csv, ngbin/denmark/ngstar.csv, ngbin/nordic/ngstar.csv, ngbin/southerneurope/ngstar.csv, ngbin/uknorth/ngstar.csv, ngbin/uksouth/ngstar.csv, ngbin/1983/ngstar.csv, ngbin/2013/ngstar.csv, ngbin/2019/ngstar.csv, ngbin/2020/ngstar.csv, ngbin/sa/ngstar.csv, ngbin/hawaii/ngstar.csv
+    output: metadata.csv, ngstar.csv
+    jobid: 0
+    reason: Missing output files: metadata.csv, ngstar.csv
+    resources: tmpdir=/var/folders/dn/nrd_gjln58n1f04d0h4bjp240000gp/T
+
+[Thu Jun 29 16:16:53 2023]
+Error in rule collate_metadata:
+    jobid: 0
+    input: ngbin/africaasiaspain/metadata.csv, ngbin/aus/metadata.csv, ngbin/nz/metadata.csv, ngbin/denmark/metadata.csv, ngbin/nordic/metadata.csv, ngbin/southerneurope/metadata.csv, ngbin/uknorth/metadata.csv, ngbin/uksouth/metadata.csv, ngbin/1983/metadata.csv, ngbin/2013/metadata.csv, ngbin/2019/metadata.csv, ngbin/2020/metadata.csv, ngbin/sa/metadata.csv, ngbin/hawaii/metadata.csv, ngbin/africaasiaspain/ngstar.csv, ngbin/aus/ngstar.csv, ngbin/nz/ngstar.csv, ngbin/denmark/ngstar.csv, ngbin/nordic/ngstar.csv, ngbin/southerneurope/ngstar.csv, ngbin/uknorth/ngstar.csv, ngbin/uksouth/ngstar.csv, ngbin/1983/ngstar.csv, ngbin/2013/ngstar.csv, ngbin/2019/ngstar.csv, ngbin/2020/ngstar.csv, ngbin/sa/ngstar.csv, ngbin/hawaii/ngstar.csv
+    output: metadata.csv, ngstar.csv
+    conda-env: pandas
+
+Removing output files of failed job collate_metadata since they might be corrupted:
+metadata.csv, ngstar.csv
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: .snakemake/log/2023-06-29T161652.581520.snakemake.log

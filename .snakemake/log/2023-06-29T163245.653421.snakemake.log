@@ -1,0 +1,31 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Conda environments: ignored
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+collate_metadata        1              1              1
+total                   1              1              1
+
+Select jobs to execute...
+
+[Thu Jun 29 16:32:46 2023]
+rule collate_metadata:
+    input: ngbin/africaasiaspain/metadata.csv, ngbin/aus/metadata.csv, ngbin/nz/metadata.csv, ngbin/denmark/metadata.csv, ngbin/nordic/metadata.csv, ngbin/southerneurope/metadata.csv, ngbin/uknorth/metadata.csv, ngbin/uksouth/metadata.csv, ngbin/1983/metadata.csv, ngbin/2013/metadata.csv, ngbin/2019/metadata.csv, ngbin/2020/metadata.csv, ngbin/sa/metadata.csv, ngbin/hawaii/metadata.csv
+    output: metadata.csv
+    jobid: 0
+    reason: Code has changed since last execution
+    resources: tmpdir=/var/folders/dn/nrd_gjln58n1f04d0h4bjp240000gp/T
+
+[Thu Jun 29 16:32:46 2023]
+Error in rule collate_metadata:
+    jobid: 0
+    input: ngbin/africaasiaspain/metadata.csv, ngbin/aus/metadata.csv, ngbin/nz/metadata.csv, ngbin/denmark/metadata.csv, ngbin/nordic/metadata.csv, ngbin/southerneurope/metadata.csv, ngbin/uknorth/metadata.csv, ngbin/uksouth/metadata.csv, ngbin/1983/metadata.csv, ngbin/2013/metadata.csv, ngbin/2019/metadata.csv, ngbin/2020/metadata.csv, ngbin/sa/metadata.csv, ngbin/hawaii/metadata.csv
+    output: metadata.csv
+    conda-env: snakemake
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: .snakemake/log/2023-06-29T163245.653421.snakemake.log
