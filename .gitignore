@@ -7,3 +7,4 @@
 /uk
 .DS_Store
 *.csv
+*.snakemake
