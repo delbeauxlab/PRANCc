@@ -6,5 +6,6 @@
 /sa
 /uk
 .DS_Store
+/resources
 *.csv
 *.snakemake
