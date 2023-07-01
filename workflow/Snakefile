@@ -8,27 +8,26 @@ folders = glob_wildcards("results/cctyperresults/{folder}.fasta/")
 # where data comes from pathogen.watch
 rule collate_metadata:
     input:
-        expand("ngbin/{region}/metadata.csv", region=regions)
+        "Resources/{species}/metadata*.csv"
     output:
-        "metadata.csv"
+        "Resources/{species}/collatedmetadata.csv"
     conda:
-        "snakemake" #snakemake and pandas
+        "envs/pandas.yaml"
     script:
         "scripts/collate_metadata.py"
 
 rule collate_ngstar:
     input:
-        expand("ngbin/{region}/ngstar.csv", region=regions)
+        "Resources/{species}/ngstar*.csv"
     output:
-        "ngstar.csv"
+        "Resources/{species}/collatedngstar.csv"
     conda:
-        "snakemake" #snakemake and pandas
+        "envs/pandas.yaml"
     script:
         "scripts/collate_metadata.py"
 
 rule collect_cas:
     input:
-        # expand("results/cctyper/{isolate}.fasta
         # expand("results/cctyperresults/{folder}.fasta/cas_operons.tab",folder=folders)
         "results/cctyperresults/SAMEA1690492.fasta/cas_operons.tab"
         "results/cctyperresults/SAMEA1690494.fasta/cas_operons.tab"
@@ -39,3 +38,23 @@ rule collect_cas:
         "envs/pandas.yaml"
     script:
         "workflow/scripts/collect_cctyper_output.py"
+
+rule run_cctyper
+    input:
+        "Resources/{species}/bin/{isolate}.fasta"
+    output:
+        "results/{species}/{isolate}/"
+    conda:
+        "envs/cctyper.yaml"
+    shell:
+        "cctyper {input} {output}"
+
+rule run_amrfinder
+    input:
+        "Resources/{species}bin/{isolate}.fasta"
+    output:
+        "results/{species}/{isolate}"
+    conda:
+        "envs/amrfinder.yaml"
+    shell:
+        "amrfinder -n {input} --organism Neisseria_gonorrhoeae -o {output}" #think i might need to specify file
