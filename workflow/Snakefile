@@ -1,60 +1,21 @@
-# Define the regions - only relates to our file structure
-regions = ["africaasiaspain","aus","nz","denmark","nordic","southerneurope","uknorth","uksouth","1983","2013","2019","2020",
-"sa","hawaii"]
+#id = glob_wildcards("resources/ng/bin/{isolate}.fasta/")
+id = glob_wildcards("results/ng/cctyperresults/{isolate}.fasta/")
 
-folders = glob_wildcards("results/cctyperresults/{folder}.fasta/")
-
-# collates all metadata.csv and ngstar.csv files. run once. mostly applicable for projects
-# where data comes from pathogen.watch
-rule collate_metadata:
+rule all:
     input:
-        "Resources/{species}/metadata*.csv"
-    output:
-        "Resources/{species}/collatedmetadata.csv"
-    conda:
-        "envs/pandas.yaml"
-    script:
-        "scripts/collate_metadata.py"
-
-rule collate_ngstar:
-    input:
-        "Resources/{species}/ngstar*.csv"
-    output:
-        "Resources/{species}/collatedngstar.csv"
-    conda:
-        "envs/pandas.yaml"
-    script:
-        "scripts/collate_metadata.py"
+        "results/ng/collected_cas_operons.tab"
 
 rule collect_cas:
     input:
-        # expand("results/cctyperresults/{folder}.fasta/cas_operons.tab",folder=folders)
-        "results/cctyperresults/SAMEA1690492.fasta/cas_operons.tab"
-        "results/cctyperresults/SAMEA1690494.fasta/cas_operons.tab"
-        "results/cctyperresults/SAMEA1690495.fasta/cas_operons.tab"
-    output:
-        "results/crisprcasgenes.csv"
-    conda:
-        "envs/pandas.yaml"
-    script:
-        "workflow/scripts/collect_cctyper_output.py"
-
-rule run_cctyper
-    input:
-        "Resources/{species}/bin/{isolate}.fasta"
-    output:
-        "results/{species}/{isolate}/"
-    conda:
-        "envs/cctyper.yaml"
-    shell:
-        "cctyper {input} {output}"
-
-rule run_amrfinder
-    input:
-        "Resources/{species}bin/{isolate}.fasta"
-    output:
-        "results/{species}/{isolate}"
-    conda:
-        "envs/amrfinder.yaml"
-    shell:
-        "amrfinder -n {input} --organism Neisseria_gonorrhoeae -o {output}" #think i might need to specify file
+        #"results/ng/cctyperresults/ECDC_1087138.fasta/cas_operons.tab",
+        "results/ng/cctyperresults/ECDC_1820983.fasta/cas_operons.tab"
+        #expand("results/ng/cctyperresults/{isolate}.fasta", isolate=id, allow_missing=True)
+    #output:
+        #"results/ng/collected_cas_operons.tab"
+    #conda:
+        #"snakemake"
+        #"envs/pandas.yaml"
+    '''script:
+        "workflow/scripts/collecttest.py"'''
+    run:
+        print({input[0]})
