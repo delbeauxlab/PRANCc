@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
 # This program takes the outputs of collate_metadata.py and
-# collect_cctyper_output.py and merges them into one DataFrame object
+# collect_cctyper_output.py and collect_amrfinderplusplus_output.py and merges them into one DataFrame object
 # then prints only relevant fields to file
 
 import pandas as pd
@@ -13,6 +13,7 @@ from os.path import isfile, join
 from country_dictionary import countrydict
 
 # gives paths to locations of all three files
+# will add amrfinder++ when done
 metadatapath = '../../resources/ngmetadata_compiled.csv'
 ngstarpath = '../../resources/ngngstar_compiled.csv'
 cctyperpath = '../../results/ng/crisprcasgenes.csv'

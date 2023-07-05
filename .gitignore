@@ -11,3 +11,4 @@
 *.snakemake
 .idea
 /results
+dag*
