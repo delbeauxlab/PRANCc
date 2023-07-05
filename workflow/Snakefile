@@ -1,15 +1,15 @@
-#id = glob_wildcards("resources/ng/bin/{isolate}.fasta/")
-id = glob_wildcards("results/ng/cctyperresults/{isolate}.fasta/")
+id, = glob_wildcards("resources/ng/bin/{isolate}.fasta/")
+#id, = glob_wildcards("results/ng/cctyperresults/{isolate}.fasta/")
 
 rule all:
     input:
-        "results/ng/collected_cas_operons.tab"
+        #"results/ng/collected_cas_operons.tab"
 
 rule collect_cas:
     input:
         #"results/ng/cctyperresults/ECDC_1087138.fasta/cas_operons.tab",
-        "results/ng/cctyperresults/ECDC_1820983.fasta/cas_operons.tab"
-        #expand("results/ng/cctyperresults/{isolate}.fasta", isolate=id, allow_missing=True)
+        #"results/ng/cctyperresults/ECDC_1820983.fasta/cas_operons.tab"
+        expand("results/ng/cctyperresults/{isolate}.fasta", isolate=id, allow_missing=True)
     #output:
         #"results/ng/collected_cas_operons.tab"
     #conda:
@@ -17,5 +17,5 @@ rule collect_cas:
         #"envs/pandas.yaml"
     '''script:
         "workflow/scripts/collecttest.py"'''
-    run:
-        print({input[0]})
+    shell:
+        "ECHO {input}"
