@@ -12,3 +12,4 @@
 .idea
 /results
 dag*
+__pycache__/
