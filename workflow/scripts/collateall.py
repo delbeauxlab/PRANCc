@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 
 # This program takes the outputs of collate_metadata.py and
 # collect_cctyper_output.py and collect_amrfinderplusplus_output.py and merges them into one DataFrame object
