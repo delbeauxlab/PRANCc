@@ -8,7 +8,7 @@
 import pandas as pd
 import os
 
-statscsv = pd.read_csv('../../results/statsdata.csv', dtype={
+'''statscsv = pd.read_csv('../../results/statsdata.csv', dtype={
     'id': 'string',
     'day': 'int64',
     'month': 'int64',
@@ -31,6 +31,39 @@ statscsv = pd.read_csv('../../results/statsdata.csv', dtype={
     'Cas Prediction': 'string',
     'Complete Interference': 'object',
     'Complete Adaptation': 'object',
+    'Best_type': 'string',
+    'Genes': 'object',
+    'Positions': 'object',
+    'AMR Contig id': 'object',
+    'AMR Start': 'object',
+    'AMR Stop': 'object',
+    'AMR Gene symbol': 'object'
+})'''
+statscsv = pd.read_csv('../../results/statsdata.csv')
+
+statscsv = statscsv.astype({
+    'id': 'string',
+    'day': 'Int64',
+    'month': 'Int64',
+    'year': 'Int64',
+    'Country': 'string',
+    'latitude': 'string',
+    'longitude': 'string',
+    'NgStar Version': 'string',
+    'ST': 'string',
+    'penA': 'object',
+    'mtrR': 'string',
+    'porB': 'object',
+    'ponA': 'object',
+    'gyrA': 'object',
+    'parC': 'object',
+    '23S': 'object',
+    'Cas Operon': 'string',
+    'Cas Start': 'Int64',
+    'Cas End': 'Int64',
+    'Cas Prediction': 'string',
+    'Complete_Interference': 'object',
+    'Complete_Adaptation': 'object',
     'Best_type': 'string',
     'Genes': 'object',
     'Positions': 'object',
