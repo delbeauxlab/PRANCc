@@ -1,32 +1,16 @@
-dframe1 <- read.csv(file.choose())
-getwd()
+# run at start of session to initialise dframe1 and edit data to be workable ####
+# dframe1 <- read.csv(file.choose())
+# getwd()
 dframe1 <- read.csv(file='PRACS/statsdata.csv')
-                    
-for(i in 1:ncol(dframe1)) {
-  for(k in ncol(i$AMR.Gene.symbol)) {
-    
-  }
-}
-
-for(i in 1:ncol(dframe1)) {
-  for(k in 1:nrow(dframe$AMR.Gene.symbol)) {
-    print(dframe1$AMR.Gene.symbol[k])
-  }
-}
-
-nrow(dframe1)
-
-m <- dframe1$AMR.Gene.symbol
-n <- as.list(strsplit(m[[5]], ','))
 
 # this is how to create a character vector similar to a python list
 # run after gsubs
-n <- unlist(strsplit(dframe1$AMR.Gene.symbol[[5]], ','))
-n <- unlist(dframe1$AMR.Gene.symbol[[5]])
-n[2]
-typeof(n)
+#n <- unlist(strsplit(dframe1$AMR.Gene.symbol[[5]], ','))
+#n <- unlist(dframe1$AMR.Gene.symbol[[5]])
+#n[2]
+#typeof(n)
 
-# strip [,],' out of text in column $AMR.Gene.symbol
+# strip [,],' out of text in column $AMR.Gene.symbol ####
 dframe1$AMR.Gene.symbol <- gsub("\\[|\\]|\\'",'',dframe1$AMR.Gene.symbol)
 
 dframe1$AMR.Gene.symbol[[5]]
@@ -37,11 +21,13 @@ for (i in 1:length(k)) {
   print(n[i])
 }
 
-# want to create a dataframe that has rows of each country, columns of the
+# want to create a dataframe that has rows of each country, columns of the ####
 # count of entries per country, and then the count of each amr gene
 # Country | Count | pena1234 | porb5678 | mtR1111
 # Australia | 3  | 2        | 1        | 0
 # create empty data frame, countries vector, amrs vector
+# note: amrs vector is still dirty. need to sanitise, remove quotes and 
+# leading/trailing whitespace
 regionamr <- data.frame()
 countries <- c()
 amrs <- c()
@@ -97,7 +83,8 @@ for(k in 1:nrow(dframe1)) {
   }
 }
 
-# create a bar chart plot
+# create a bar chart plot ####
+# import ggplot2 library
 library(ggplot2)
 # requires a data frame with three columns, countries, amrs, values
 # requires one country entry PER AMR, and then the corresponding count value
@@ -122,7 +109,7 @@ plotdata <- data.frame(plotcountries,plotamrs,values)
 ggplot(plotdata, aes(fill=plotamrs, y=values, x=plotcountries)) + 
   geom_bar(position='dodge', stat='identity')
 
-# create a heatmap
+# create a heatmap ####
 # cast regionamr dataframe to matrix
 regionamrmatrix<- as.matrix(regionamr)
 # strip out count - note, I think all this needs to be normalised by Count
