@@ -134,6 +134,13 @@ categorise_amr <- function(amr_str_list) {
   amr_list <- unlist(strsplit(amr_str_list,','))
   for(n in 1:length(amr_list)) {
     amr <- amr_list[n]
+    if(length(amr) == 0 ) {
+      next
+    }
+    if((is.na(amr))) {
+      print(n)
+      next
+    }
     if((startsWith(amr,'penA')) | (startsWith(amr,'mtrR')) | 
       (startsWith(amr,'blaTEM')) | (amr == 'ponA_L421P') | 
       (startsWith(amr,'rpoD')) | (startsWith(amr,'rpoB')) |
@@ -183,8 +190,8 @@ categorise_amr <- function(amr_str_list) {
       }
     }
     if((startsWith(amr,'catA'))) {
-      if(!('Cloramphenicols' %in% classres)) {
-        classres <- c(classres,'Cloramphenicols')
+      if(!('Chloramphenicols' %in% classres)) {
+        classres <- c(classres,'Chloramphenicols')
       }
     }
     if((startsWith(amr,'fosB'))) {
@@ -369,3 +376,171 @@ for(n in 1:nrow(dframe1)) {
 amrdata <- unique(amrdata)
 write.csv(amrdata, file='~/amr.csv')
 write.csv(unique(casdata),file='~/cas.csv')
+
+# Sex Networks ####
+# Create a list of all isolates and if data exists assign to sexual network 
+# categories - MSM, MSTSM, MSWM, WSMW, WSW where the middle three are 
+# 'crossover' categories. count number of resistance categories per category
+# and create box plots. first box plot for overall resistances identified, then
+# per resistance category?
+
+metadatamaster <- read.csv(file.choose())
+sexcolumns <- c('Sexual behaviour', 'Resistance count', 
+                'Aminocyclitols', 'Aminoglycosides', 'Ansamycins', 
+                'Beta-lactams', 'Chloramphenicols', 'Diaminopyrimidines',
+                'Fluroquinolones', 'Macrolides', 'Phosphonics', 'Sulfonamides',
+                'Tetracyclines')
+sexrows <- c()
+for(n in 1:nrow(metadatamaster)) {
+  if(!(metadatamaster$Sexual.behaviour[n] == '')) {
+    sexrows <- c(sexrows, metadatamaster$displayname[n])
+  }
+}
+# create two matrices, one for numeric entries and one for text
+# then combine them to create the right format for data frame
+sex_matrix <- matrix(0,nrow=length(sexrows),ncol=(length(sexcolumns)-1))
+sex_matrix_text <- matrix('',nrow=length(sexrows),ncol=1)
+sex_matrix <- cbind(sex_matrix_text,sex_matrix)
+# create the data frame
+sexnetworks <- data.frame(sex_matrix,row.names=sexrows)
+colnames(sexnetworks) <- sexcolumns
+# now add in data to data frame
+for(n in 1:nrow(metadatamaster)) {
+  if(!(metadatamaster$Sexual.behaviour[n] == ''))
+    sexnetworks[metadatamaster$displayname[n],'Sexual behaviour'] <- 
+      metadatamaster$Sexual.behaviour[n]
+}
+# data cleanup
+for(n in 1:nrow(sexnetworks)) {
+  if(sexnetworks[n,'Sexual behaviour'] == 'Heterosexual') {
+    print(sexrows[n])
+  }
+}
+for(n in 1:nrow(metadatamaster)) {
+    if(((metadatamaster$Sexual.behaviour[n] == 'Heterosexual') |
+       (metadatamaster$Sexual.behaviour[n] == 'Women')) && 
+      (metadatamaster$Host.sex[n] == 'male')) {
+           sexnetworks[metadatamaster$displayname[n],'Sexual behaviour'] <- 'MSW'
+    }
+    if(((metadatamaster$Sexual.behaviour[n] == 'Heterosexual') |
+        (metadatamaster$Sexual.behaviour[n] == 'Heterosexual men')) && 
+       (metadatamaster$Host.sex[n] == 'female')) {
+      sexnetworks[metadatamaster$displayname[n],'Sexual behaviour'] <- 'WSM'
+    }
+    if(((metadatamaster$Sexual.behaviour[n] == 'Bisexual') |
+        (metadatamaster$Sexual.behaviour[n] == 'Bi-sexual') |
+        (metadatamaster$Sexual.behaviour[n] == 'Bisexual MSM')) && 
+       (metadatamaster$Host.sex[n] == 'male')) {
+      sexnetworks[metadatamaster$displayname[n],'Sexual behaviour'] <- 'MSMW'
+    }
+    if(((metadatamaster$Sexual.behaviour[n] == 'Bisexual') |
+        (metadatamaster$Sexual.behaviour[n] == 'Bi-sexual')) && 
+       (metadatamaster$Host.sex[n] == 'female')) {
+      sexnetworks[metadatamaster$displayname[n],'Sexual behaviour'] <- 'WSMW'
+    }
+    if(metadatamaster$Sexual.behaviour[n] == 'Bisexual MSM') {
+      sexnetworks[metadatamaster$displayname[n],'Sexual behaviour'] <- 'MSMW'
+    }
+    if((metadatamaster$Sexual.behaviour[n] == 'Heterosexual') && 
+       ((metadatamaster$Country[n] == 'UK') | 
+        (metadatamaster$Country[n] == 'United Kingdom'))) {
+      sexnetworks[metadatamaster$displayname[n],'Sexual behaviour'] <- 'MSW'
+    }
+    if(metadatamaster$Sexual.behaviour[n] == 'Heterosexual men') {
+      sexnetworks[metadatamaster$displayname[n],'Sexual behaviour'] <- 'WSM'
+    }
+    if(metadatamaster$Sexual.behaviour[n] == 'WSM-E') {
+      sexnetworks[metadatamaster$displayname[n],'Sexual behaviour'] <- 'WSM'
+    }
+}
+for(n in 1:nrow(metadatamaster)) {
+  if(metadatamaster$Sexual.behaviour[n] == 'Heterosexual') {
+    print(paste(metadatamaster$displayname[n], metadatamaster$Country[n],
+                sexnetworks[metadatamaster$displayname[n],'Sexual behaviour']))
+  }
+}
+# do the count
+for(n in 1:nrow(dframe1)) {
+  if(dframe1$id[n] %in% rownames(sexnetworks)) {
+    iamr <- categorise_amr(dframe1$AMR.Gene.symbol[n])
+    sexnetworks[dframe1$id[n],'Resistance count'] <- sexnetworks[dframe1$id[n],'Resistance count'] + 1
+    for(m in 1:length(iamr)) {
+      print(paste(n,m,iamr[m]))
+      sexnetworks[dframe1$id[n],iamr[m]] <- sexnetworks[dframe1$id[n],iamr[m]] + 1
+      print(paste(n,m,iamr[m]))
+    }
+  }
+}
+typeof(sexnetworks[1,1])
+for(column in 2:ncol(sexnetworks)) {
+  sexnetworks[,column] <- as.integer(rep(0,nrow(sexnetworks)))
+  print(typeof(sexnetworks[1,column]))
+}
+
+# want a dataset that looks like
+# Sexual behaviour | total | amr
+# MSM | 5 | 1 | 0 | 4 | 0
+# WSW | 1 | 1 | 0 | 0 | 0
+countsexmatrix <- matrix(as.numeric(0),nrow=length(c('MSW','MSM','MSMW','WSM','TSM','WSMW')),ncol=(length(colnames(sexnetworks))-1))
+countsex <- data.frame(countsexmatrix, row.names=c('MSW','MSM','MSMW','WSM','TSM','WSMW'))
+colnames(countsex) <- colnames(sexnetworks)[-1]
+colnames(sexnetworks)
+for(n in 1:nrow(dframe1)) {
+  if(dframe1$id[n] %in% rownames(sexnetworks)) {
+    if(sexnetworks$`Sexual behaviour`[n] %in% rownames(countsex)) {
+      iamr <- categorise_amr(dframe1$AMR.Gene.symbol[n])
+      countsex[sexnetworks$`Sexual behaviour`[n],'Resistance count'] <-
+        countsex[sexnetworks$`Sexual behaviour`[n],'Resistance count'] + 1.0
+      for(m in 1:length(iamr)) {
+        #print(paste(n,m,iamr[m]))
+        countsex[sexnetworks$`Sexual behaviour`[n],iamr[m]] <-
+          countsex[sexnetworks$`Sexual behaviour`[n],iamr[m]] + 1.0
+      }
+    }
+  }
+}
+boxplot(countsex$`Resistance count`)
+rownames(countsex)
+for(n in 1:ncol(countsex)) {
+  countsex[,n] <- as.numeric(0)
+}
+tcountsex <- as.data.frame(t(countsex))
+MSM <- tcountsex$MSM[-1]
+MSW <- tcountsex$MSW[-1]
+MSMW <- tcountsex$MSMW[-1]
+WSM <- tcountsex$WSM[-1]
+TSM <- tcountsex$TSM[-1]
+WSMW <- tcountsex$WSMW[-1]
+
+MSM_norm <- rnorm(200,mean=mean(MSM, na.rm=TRUE), sd=sd(MSM, na.rm=TRUE))
+MSW_norm <- rnorm(200,mean=mean(MSW, na.rm=TRUE), sd=sd(MSW, na.rm=TRUE))
+MSMW_norm <- rnorm(200,mean=mean(MSMW, na.rm=TRUE), sd=sd(MSMW, na.rm=TRUE))
+WSM_norm <- rnorm(200,mean=mean(WSM, na.rm=TRUE), sd=sd(WSM, na.rm=TRUE))
+TSM_norm <- rnorm(200,mean=mean(TSM, na.rm=TRUE), sd=sd(TSM, na.rm=TRUE))
+WSMW_norm <- rnorm(200,mean=mean(WSMW, na.rm=TRUE), sd=sd(WSMW, na.rm=TRUE))
+
+boxplot(MSM,MSM_norm,MSW,MSW_norm,MSMW,MSMW_norm,WSM,WSM_norm,TSM,TSM_norm,
+        WSMW,WSMW_norm, main = 'Multiple boxplots', at = c(1,2,3,4,5,6,8,9,10,11,12,13),
+        names = c('MSM','normal','MSW','normal','MSMW','normal','WSM','normal',
+                  'TSM','normal','WSMW','normal'), las = 2, horizontal = TRUE)
+
+for(n in 1:nrow(dframe1)) {
+  if(dframe1$id[n] %in% rownames(sexnetworks)) {
+    iamr <- categorise_amr(dframe1$AMR.Gene.symbol[n])
+    sexnetworks[dframe1$id[n],'Resistance count'] <- sexnetworks[dframe1$id[n],'Resistance count'] + 1
+    for(m in 1:length(iamr)) {
+      print(paste(n,m,iamr[m]))
+      sexnetworks[dframe1$id[n],iamr[m]] <- sexnetworks[dframe1$id[n],iamr[m]] + 1
+      print(paste(n,m,iamr[m]))
+
+
+unique(sexnetworks$`Sexual behaviour`)
+unique(metadatamaster$Sexual.behaviour)
+
+rowsvector <- c()
+for(n in 1:nrow(metadatamaster)) {
+  if(metadatamaster$Sexual.behaviour[n] == 'Homosexual') {
+    rowsvector <- c(rowsvector, metadatamaster$displayname[n])
+  }
+}
+write.table(rowsvector, file=pipe('pbcopy'), sep='\t')
