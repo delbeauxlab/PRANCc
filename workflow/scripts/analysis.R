@@ -243,6 +243,7 @@ main_cas_list <- function(cas_list_list) {
   for(n in 1:length(cas_list_list)) {
     #cas_list <- categorise_cas(cas_list_list[n])
     cas_type_list <- c(cas_type_list,categorise_cas(cas_list_list[n]))
+    cas_type_list <- unique(cas_type_list)
   }
   return(unique(cas_type_list))
 }
@@ -532,6 +533,93 @@ for(n in 1:nrow(dframe1)) {
       print(paste(n,m,iamr[m]))
       sexnetworks[dframe1$id[n],iamr[m]] <- sexnetworks[dframe1$id[n],iamr[m]] + 1
       print(paste(n,m,iamr[m]))
+    }
+  }
+}
+
+set.seed(8)
+y <- rnorm(200)
+group <- sample(LETTERS[1:3], size = 200,
+                replace = TRUE)
+df <- data.frame(y, group)
+group
+
+sexdfggmatrix <- matrix(ncol=2, nrow=0)
+sexdfggplot <- data.frame(matrix(ncol=2, nrow=0))
+
+sexdfgggroup <- c()
+sexdfggcounts <- c()
+sexdfggamr <- c()
+
+
+tcountsexmtotal <- tcountsex[-1,]
+
+for(n in 1:nrow(tcountsexmtotal)) {
+  for(m in 1:ncol(tcountsexmtotal)) {
+    sexdfgggroup <- c(sexdfgggroup,colnames(tcountsexmtotal[m]))
+    sexdfggcounts <- c(sexdfggcounts,as.numeric(tcountsexmtotal[n,m]))
+    sexdfggamr <- c(sexdfggamr,rownames(tcountsexmtotal)[n])
+  }
+  sexdfggmatrix <- matrix(c(sexdfggcounts,sexdfgggroup,sexdfggamr),ncol=3,nrow=(length(sexdfgggroup)))
+  sexdfggplot <- data.frame(sexdfggmatrix)
+  colnames(sexdfggplot) <- c('y','group','resistance')
+}
+
+for(n in 2:nrow(tcountsex)) {
+  for(m in 1:ncol(tcountsex)) {
+    sexdfgggroup <- c(sexdfgggroup,colnames(tcountsex[m]))
+    sexdfggcounts <- c(sexdfggcounts,as.numeric(tcountsex[n,m]))
+    sexdfggamr <- c(sexdfggamr,rownames(tcountsex)[-1][n])
+  }
+  sexdfggmatrix <- matrix(c(sexdfggcounts,sexdfgggroup,sexdfggamr),ncol=3,nrow=(length(sexdfgggroup)))
+  sexdfggplot <- data.frame(sexdfggmatrix)
+  colnames(sexdfggplot) <- c('y','group','resistance')
+}
+length(sexdfgggroup)
+length(sexdfggcounts)
+length(sexdfggamr)
+
+
+
+ggplot(sexdfggplot, aes(x = sexdfgggroup, y = sexdfggcounts)) + 
+  geom_boxplot(outlier.shape = NA) +
+  ylab('Number of resistance class genes found') +
+  xlab('Sex Networks') + labs(color='Resistance class') +
+  ggtitle('Resistances identified by Sex Networks in Neisseria gonorrhoeae') +
+  geom_jitter(aes(colour=sexdfggamr), show.legend = T) +
+  coord_flip() 
+
+sexdfggcountsnorm <- c()
+for(n in 1:nrow(tcountsexmtotal)) {
+  for(m in 1:ncol(tcountsexmtotal)) {
+    if(tcountsex['Resistance count',m] == 0) {
+      sexdfggcountsnorm <- c(sexdfggcountsnorm, 0)
+      print('skipped')
+      next
+    }
+    sexdfggcountsnorm <- c(sexdfggcountsnorm,(as.numeric(tcountsexmtotal[n,m]) / tcountsex['Resistance count',m]))
+    print(length(sexdfggcountsnorm))
+  }
+  #sexdfggcountssnorm <- sexdfggcountsnorm[1:66]
+  sexdfggmatrixnorm <- matrix(c(sexdfggcountsnorm,sexdfgggroup,sexdfggamr),ncol=3,nrow=(length(sexdfgggroup)))
+  sexdfggplotnorm <- data.frame(sexdfggmatrixnorm)
+  colnames(sexdfggplotnorm) <- c('y','group','resistance')
+}
+length(sexdfggcounts)
+sexdfggcountsnorm <- sexdfggcountsnorm[1:66]
+length(sexdfggcountsnorm)
+ggplot(sexdfggplot, aes(x = sexdfgggroup, y = sexdfggcountsnorm)) + 
+  geom_boxplot(outlier.shape = NA) +
+  ylab('Percentage of resistance class genes found') +
+  xlab('Sex Networks') + labs(color='Resistance class') +
+  ggtitle('Resistances identified by Sex Networks in Neisseria gonorrhoeae') +
+  geom_jitter(aes(colour=sexdfggamr), show.legend = T) +
+  coord_flip() 
+
+ggplot(tcountsex, aes(x = rownames(tcountsex), y = MSM)) + 
+  geom_boxplot() +
+  geom_jitter() +
+  coord_flip()
 
 
 unique(sexnetworks$`Sexual behaviour`)
@@ -544,3 +632,781 @@ for(n in 1:nrow(metadatamaster)) {
   }
 }
 write.table(rowsvector, file=pipe('pbcopy'), sep='\t')
+
+# resistance counts sex networks ####
+# create horizontal bar graph of resistances normalised and grouped by sex networks
+
+soft_categorise_amr <- function(amr_str_list) {
+  returnlist <- c()
+  templist <- c()
+  if(amr_str_list == '') {
+    return('')
+    break
+  }
+  templist <- unlist(strsplit(amr_str_list,','))
+  for(n in 1:length(templist)) {
+    amr <- templist[n]
+    if(length(amr) == 0 ) {
+      next
+    }
+    if(startsWith(amr,'penA')) {
+      returnlist <- c(returnlist,'penA variant')
+    } else if(startsWith(amr,'blaTEM')) {
+      returnlist <- c(returnlist,'blaTEM variant')
+    } else {
+      returnlist <- c(returnlist,amr)
+    }
+    returnlist <- unique(returnlist)
+  }
+  return(returnlist)
+}
+
+# create vectors to use to create matrix
+
+unique(metadatamaster$Sexual.behaviour)
+# count sexual behaviour categories in sexual behaviour
+behlist <- unique(metadatamaster$Sexual.behaviour)
+countbeh <- rep(as.integer(0),(length(behlist))) 
+for(n in 1:nrow(metadatamaster)) {
+  for(m in 1:length(behlist)) {
+    if((metadatamaster$Sexual.behaviour[n]) == (behlist[m])) {
+      countbeh[m] <- countbeh[m] + 1
+    }
+  }
+}
+for(l in 1:length(behlist)) {
+  print(paste(behlist[l],countbeh[l],sep=', '))
+}
+# categorise sexual behaviour
+categorise_behaviour <- function(n) {
+  behcatlist <- c('MSM','MSMW','MSW','TSM','WSM','WSMW')
+  returncat <- ''
+  if(!(metadatamaster$Sexual.behaviour[n] == '')) {
+    if(metadatamaster$Sexual.behaviour[n] %in% behcatlist) {
+      returncat <- metadatamaster$Sexual.behaviour[n]
+    } else if(metadatamaster$Sexual.behaviour[n] == 'Bisexual MSM') {
+      returncat <- 'MSMW'
+    } else if(metadatamaster$Sexual.behaviour[n] == 'WSM-E') {
+      returncat <- 'WSM'
+    } else if(metadatamaster$Sexual.behaviour[n] == 'Heterosexual men') {
+      returncat <- 'WSM'
+    } else if(!(metadatamaster$Host.sex[n] == '')) {
+      if(metadatamaster$Sexual.behaviour[n] == 'Heterosexual') {
+        if(metadatamaster$Host.sex[n] == 'male') {
+          returncat <- 'MSW'
+        } else if(metadatamaster$Host.sex[n] == 'female') {
+          returncat <- 'WSM'
+        }
+      } else if(metadatamaster$Sexual.behaviour[n] == 'Women') {
+        if(metadatamaster$Host.sex[n] == 'female') {
+          returncat <- 'WSW'
+        } else if(metadatamaster$Host.sex[n] == 'male') {
+          returncat <- 'MSW'
+        }
+      } else if((metadatamaster$Sexual.behaviour[n] == 'Bisexual') |
+                (metadatamaster$Sexual.behaviour[n] == 'Bi-sexual')) {
+        if(metadatamaster$Host.sex[n] == 'female') {
+          returncat <- 'WSMW'
+        } else if(metadatamaster$Host.sex[n] == 'male' ) {
+          returncat <- 'MSMW'
+        }
+      }
+    }
+  }
+  return(returncat)
+}
+catbehlist <- c()
+for(n in 1:nrow(metadatamaster)) {
+  catbehlist <- c(catbehlist,categorise_behaviour(n))
+}
+# count categorised list
+catbehlist <- unique(catbehlist)
+catbehlist <- catbehlist[-1]
+countcatbehlist <- rep(as.integer(0),(length(catbehlist))) 
+for(n in 1:nrow(metadatamaster)) {
+  for(m in 1:length(catbehlist)) {
+    print(categorise_behaviour(n))
+    if(!(categorise_behaviour(n) == '')) {
+      if(((categorise_behaviour(n)) == (catbehlist[m]))) {
+        countcatbehlist[m] <- countcatbehlist[m] + 1
+      }
+    }
+  }
+}
+
+for(l in 1:length(catbehlist)) {
+  print(paste(catbehlist[l],countcatbehlist[l],sep=', '))
+}
+countcatbehlist
+dfcountcatbehlist <- data.frame(countcatbehlist)
+rownames(dfcountcatbehlist) <- catbehlist
+dfcountcatbehlist
+
+# get list of all soft categorised amrs
+softcatamrall <- c()
+for(n in 1:nrow(metadatamaster)) {
+  amrlist <- soft_categorise_amr(dframe1$AMR.Gene.symbol[n])
+  if(length(amrlist) == 0) {
+    next
+  }
+  for(m in 1:length(amrlist)) {
+    if(amrlist[m] == '') {
+      next
+    }
+    softcatamrall <- c(softcatamrall,amrlist[m])
+    softcatamrall <- unique(softcatamrall)
+  }
+}
+
+# now create base vectors to work from
+# data frame should look like
+# sexual behaviour | amr gene count | amr gene 2 count | amr gene n count
+
+countmatrix <- matrix(0,nrow=length(catbehlist),ncol=length(softcatamrall))
+colnames(countmatrix) <- softcatamrall
+rownames(countmatrix) <- catbehlist
+for(n in 1:nrow(metadatamaster)) {
+  amrlist <- soft_categorise_amr(dframe1$AMR.Gene.symbol[n])
+  beh <- categorise_behaviour(n)
+  if(beh %in% catbehlist) {
+    for(m in 1:length(amrlist)) {
+      if(amrlist[m] %in% softcatamrall) {
+        countmatrix[beh,amrlist[m]] <- countmatrix[beh,amrlist[m]] + 1
+      }
+    }
+  }
+}
+
+# create ggplot vectors
+countsnorm <- c()
+countsbeh <- c()
+countsamr <- c()
+counts <- c()
+for(r in 1:nrow(countmatrix)) {
+  for(c in 1:ncol(countmatrix)) {
+    countsnorm <- c(countsnorm, countmatrix[r,c] / sum(countmatrix[r,]))
+    counts <- c(counts,countmatrix[r,c])
+    countsbeh <- c(countsbeh,rownames(countmatrix)[r])
+    countsamr <- c(countsamr,colnames(countmatrix)[c])
+  }
+  countsdfnorm <- data.frame(countsnorm,countsbeh,countsamr)
+  colnames(sexdfggplotnorm) <- c('counts','behaviour','amrgene')
+}
+for(r in 1:nrow(countmatrix)) {
+  print(sum(countmatrix[r,]))
+}
+
+library(ggplot2)
+ggplot(countsdfnorm,aes(fill=countsamr, y=countsnorm, x=countsbeh)) + 
+  geom_bar(position='stack', stat='identity') +
+  ggtitle('Relative frequency of AMR gene by Sexual Orientation') +
+  xlab('Sexual Behaviour') + ylab('AMR gene frequency') +
+  labs(color='Gene') + coord_flip() + theme_minimal() + 
+  scale_y_continuous(labels = scales::percent) + theme(legend.position = 'None')
+
+# now redo box plot with accurate data
+# two versions - one with amr genes, one with resistance category
+dfboxplot <- data.frame(counts,countsbeh,countsamr)
+# sexbyresistanceold 
+ggplot(dfboxplot, aes(x = countsbeh, y = counts)) + 
+  geom_boxplot(outlier.shape = NA) +
+  ylab('Number of resistance class genes found') +
+  xlab('Sex Networks') + labs(color='AMR gene') +
+  ggtitle('Resistances identified by Sex Networks in Neisseria gonorrhoeae') +
+  geom_jitter(aes(colour=countsamr), show.legend = T) +
+  coord_flip() + theme_minimal()
+
+# now with category
+catamrall <- c()
+for(n in 1:nrow(metadatamaster)) {
+  amrlist <- categorise_amr(dframe1$AMR.Gene.symbol[n])
+  if(length(amrlist) == 0) {
+    next
+  }
+  for(m in 1:length(amrlist)) {
+    if(amrlist[m] == '') {
+      next
+    }
+    catamrall <- c(catamrall,amrlist[m])
+    catamrall <- unique(catamrall)
+  }
+}
+catcountmatrix <- matrix(0,nrow=length(catbehlist),ncol=length(catamrall))
+colnames(catcountmatrix) <- catamrall
+rownames(catcountmatrix) <- catbehlist
+for(n in 1:nrow(metadatamaster)) {
+  amrlist <- categorise_amr(dframe1$AMR.Gene.symbol[n])
+  beh <- categorise_behaviour(n)
+  if(beh %in% catbehlist) {
+    if(length(amrlist) == 0 ) {
+      next
+    }
+    for(m in 1:length(amrlist)) {
+      print(amrlist)
+      if(amrlist[m] %in% catamrall) {
+        print(amrlist[m])
+        catcountmatrix[beh,amrlist[m]] <- catcountmatrix[beh,amrlist[m]] + 1
+      }
+    }
+  }
+}
+catcountsnorm <- c()
+catcountsbeh <- c()
+catcountsamr <- c()
+catcounts <- c()
+for(r in 1:nrow(catcountmatrix)) {
+  for(c in 1:ncol(catcountmatrix)) {
+    catcountsnorm <- c(catcountsnorm, catcountmatrix[r,c] / sum(catcountmatrix[r,]))
+    catcounts <- c(catcounts,catcountmatrix[r,c])
+    catcountsbeh <- c(catcountsbeh,rownames(catcountmatrix)[r])
+    catcountsamr <- c(catcountsamr,colnames(catcountmatrix)[c])
+  }
+  catcountsdf <- data.frame(catcounts,catcountsbeh,catcountsamr)
+  colnames(catcountsdf) <- c('counts','behaviour','amrgene')
+}
+# sexbyoldclass
+ggplot(catcountsdf, aes(x = catcountsbeh, y = catcounts)) + 
+  geom_boxplot(outlier.shape = NA) +
+  ylab('Number of resistance class resistances found') +
+  xlab('Sex Networks') + labs(color='AMR category') +
+  ggtitle('Resistances identified by Sex Networks in Neisseria gonorrhoeae') +
+  geom_jitter(aes(colour=catcountsamr), show.legend = T) +
+  coord_flip() + theme_minimal() 
+
+# heatmaps! ####
+library(maps)
+library(ggplot)
+world_map <- map_data("world")
+world_map <- subset(world_map, region != "Antarctica")
+# create data frame for this dealy
+
+# create list of countries
+dframe1$Country[dframe1$Country == 'HongKong'] <- 'Hong Kong'
+dframe1$Country[dframe1$Country == 'Viet Nam'] <- 'Vietnam'
+countrylist <- c()
+for(r in 1:nrow(dframe1)) {
+  if(!(dframe1$Country[r] == '')) {
+    countrylist <- c(countrylist,dframe1$Country[r])
+    countrylist <- unique(countrylist)
+  }
+}
+# reuse list of soft categorised amr genes (softcatamrall)
+{heatmap_matrix <- matrix(0,nrow=length(countrylist),ncol=length(softcatamrall))
+colnames(heatmap_matrix) <- softcatamrall
+rownames(heatmap_matrix) <- countrylist
+
+heatmap_case_by_country <- matrix(0,nrow=length(countrylist),ncol=1)
+colnames(heatmap_case_by_country) <- c('Total cases')
+rownames(heatmap_case_by_country) <- countrylist
+
+# populate heatmap matrix
+for(r in 1:nrow(dframe1)) {
+  if(!(dframe1$Country[r] == '')) {
+    heatmap_case_by_country[dframe1$Country[r],1] <-
+      heatmap_case_by_country[dframe1$Country[r],1] + 1
+    if(!(dframe1$AMR.Gene.symbol[r] == '')) {
+      amrlist <- dframe1$AMR.Gene.symbol[r]
+      for(n in 1:length(amrlist)) {
+        amr <- soft_categorise_amr(amrlist[n])
+        if(length(amr) == 0 ) {
+          next
+        }
+        heatmap_matrix[dframe1$Country[r],amr] <-
+          heatmap_matrix[dframe1$Country[r],amr] + 1
+      }
+    }
+  }
+  dfheatmap <- (heatmap_matrix)
+  dfheatmapnorm <- dfheatmap
+  for(l in 1:nrow(dfheatmap)) {
+    dfheatmapnorm[l,] <- dfheatmapnorm[l,] / heatmap_case_by_country[l,1]
+  }
+}
+}
+
+# create vectors for ggplot (for penA variants)
+# id | country | value
+ggheatmap <- data.frame(c(rownames(dfheatmapnorm)), dfheatmapnorm[,1])
+colnames(ggheatmap) <- c('Country', 'Cases')
+
+ggplot(ggheatmap) + geom_map(dat = world_map, map = world_map, 
+                             aes(map_id = region), fill = "white", 
+                             color = "#7f7f7f", size = 0.25) +
+  ggtitle("Percentage of N.g. isolates with penA variant genes") +
+  geom_map(map = world_map, aes(map_id = ggheatmap$Country, fill = ggheatmap$Cases), size = 0.25) +
+  scale_fill_gradient(low = "#fff7bc", high = "#cc4c02", name = "Percentage") +
+  expand_limits(x = world_map$long, y = world_map$lat)
+
+# stacked bar charts of amr and cas prevalence by country ####
+# need list of all countries and all amrs and all cas genes
+# countrylist, softcatamrall, main_cas_list()
+caslistall <- main_cas_list(dframe1$Genes)
+caslist
+
+# because vectors are going to be different sizes, need to create paired 
+# vectors of country + amr and country + cas
+# but can create in same loop
+{
+  caslistall <- main_cas_list(dframe1$Genes)
+  countryamr <- matrix(0,nrow=length(countrylist),ncol=length(softcatamrall))
+  colnames(countryamr) <- softcatamrall
+  rownames(countryamr) <- countrylist
+  countrycas <- matrix(0,nrow=length(countrylist),ncol=length(caslistall))
+  colnames(countrycas) <- caslistall
+  rownames(countrycas) <- countrylist
+  
+  for(r in 1:nrow(dframe1)) {
+    if(!(dframe1$Country[r] == '')) {
+      if(!(dframe1$Genes[r] == '')) {
+        caslist <- categorise_cas(dframe1$Genes[r])
+        for(n in 1:length(caslist)) {
+          cas <- caslist[n]
+          if(cas %in% caslistall){
+            countrycas[dframe1$Country[r],cas] <- 
+              countrycas[dframe1$Country[r],cas] + 1
+          }
+        }
+      }
+      if(!(dframe1$AMR.Gene.symbol[r] == '')) {
+        amrlist <- soft_categorise_amr(dframe1$AMR.Gene.symbol[r])
+        for(m in 1:length(amrlist)) {
+          amr <- amrlist[m]
+          if(amr %in% softcatamrall) {
+            countryamr[dframe1$Country[r],amr] <-
+              countryamr[dframe1$Country[r],amr] + 1
+          }
+        }
+      }
+    }
+  }
+  # create normed vectors for ggplot
+  countryamrnorm <- c()
+  countryamramr <- c()
+  countryamrcountry <- c()
+  for(r in 1:nrow(countryamr)) {
+    for(c in 1:ncol(countryamr)) {
+      countryamrnorm <- c(countryamrnorm,(countryamr[r,c] / sum(countryamr[r,])))
+      countryamramr <- c(countryamramr, colnames(countryamr)[c])
+      countryamrcountry <- c(countryamrcountry, rownames(countryamr)[r])
+    }
+  }
+  countrycasnorm <- c()
+  countrycascas <- c()
+  countrycascountry <- c()
+  for(r in 1:nrow(countrycas)) {
+    for(c in 1:ncol(countrycas)) {
+      countrycasnorm <- c(countrycasnorm,(countrycas[r,c] / sum(countrycas[r,])))
+      countrycascas <- c(countrycascas, colnames(countrycas)[c])
+      countrycascountry <- c(countrycascountry, rownames(countrycas)[r])
+    }
+  }
+  print(length(countrycasnorm))
+  print(length(countrycascas))
+  print(length(countrycascountry))
+  dfcountrycas <- data.frame(countrycasnorm,countrycascas,countrycascountry)
+  dfcountryamr <- data.frame(countryamrnorm,countryamramr,countryamrcountry)
+}
+
+ggplot(dfcountrycas,aes(fill=countrycascas, y=countrycasnorm, x=countrycascountry)) + 
+  geom_bar(position='stack', stat='identity') +
+  ggtitle('Relative frequency of Cas genes found by Country') +
+  xlab('Country') + ylab('Cas Gene Frequency') +
+  labs(color='Gene') + coord_flip() + theme_minimal() + 
+  scale_y_continuous(labels = scales::percent)
+
+ggplot(dfcountryamr,aes(fill=countryamramr, y=countryamrnorm, x=countryamrcountry)) + 
+  geom_bar(position='stack', stat='identity') +
+  ggtitle('Relative frequency of Resistance genes found by Country') +
+  xlab('Country') + ylab('Resistance Gene Frequency') +
+  labs(color='Gene') + coord_flip() + theme_minimal() + 
+  scale_y_continuous(labels = scales::percent) + theme(legend.position = "none")
+
+# new mechanism classes ####
+# accepts a string of comma separated amr values (with no spaces)
+mechanism_class <- function(amrlist) {
+  mechanismclasslist <- c()
+  if(!(amrlist == '' )) {
+    amrlist <- unlist(strsplit(amrlist,','))
+    for(m in 1:length(amrlist)) {
+      amr <- amrlist[m]
+      if(startsWith(amr,'penA')) {
+        mechanismclasslist <- c(mechanismclasslist,'penA variant')
+      }else if(startsWith(amr,'bla')) {
+        mechanismclasslist <- c(mechanismclasslist,'bla variant')
+      }else if(startsWith(amr,'par')) {
+        mechanismclasslist <- c(mechanismclasslist,'parC/E variant')
+      }else if(startsWith(amr,'por')) {
+        mechanismclasslist <- c(mechanismclasslist,'Porins')
+      }else if(startsWith(amr,'gyr')) {
+        mechanismclasslist <- c(mechanismclasslist,'gyrA/B variant')
+      }else if(startsWith(amr,'mtr')) {
+        mechanismclasslist <- c(mechanismclasslist,'mtr variant')
+      }else if(startsWith(amr,'rpoB')) {
+        mechanismclasslist <- c(mechanismclasslist,'rpoB variant')
+      }else if(startsWith(amr, 'rpsJ')) {
+        mechanismclasslist <- c(mechanismclasslist,'rpsJ')
+      }else if(startsWith(amr,'rpsE')) {
+        mechanismclasslist <- c(mechanismclasslist,'rpsE')
+      }else if(startsWith(amr,'rpoD')) {
+        mechanismclasslist <- c(mechanismclasslist,'rpoD variant')
+      }else if(startsWith(amr,'tet')) {
+        mechanismclasslist <- c(mechanismclasslist,'tet variant')
+      }else if(startsWith(amr,'msr')) {
+        mechanismclasslist <- c(mechanismclasslist,'msr(E)')
+      }else if(startsWith(amr,'aph')) {
+        mechanismclasslist <- c(mechanismclasslist,'aph variant')
+      }else if(startsWith(amr,'erm')) {
+        mechanismclasslist <- c(mechanismclasslist,'erm variant')
+      }else if(startsWith(amr,'rpl')) {
+        mechanismclasslist <- c(mechanismclasslist,'rplD/V variant')
+      }else if(startsWith(amr,'mph')) {
+        mechanismclasslist <- c(mechanismclasslist,'mph(E)')
+      }else if(startsWith(amr,'fosB')) {
+        mechanismclasslist <- c(mechanismclasslist,'fosB')
+      }else if(startsWith(amr,'sul2')) {
+        mechanismclasslist <- c(mechanismclasslist,'sul2')
+      }else if(startsWith(amr,'fosB')) {
+        mechanismclasslist <- c(mechanismclasslist,'fosB')
+      }else if(startsWith(amr,'dfr')) {
+        mechanismclasslist <- c(mechanismclasslist,'dfrA14')
+      }else if(startsWith(amr,'23S')) {
+        mechanismclasslist <- c(mechanismclasslist,'23S_A2045G')
+      }else if(startsWith(amr,'fosB')) {
+        mechanismclasslist <- c(mechanismclasslist,'fosB')
+      }else if(startsWith(amr,'folP')) {
+        mechanismclasslist <- c(mechanismclasslist,'folP')
+      }else if(startsWith(amr,'catA')) {
+        mechanismclasslist <- c(mechanismclasslist,'catA')
+      }else if(startsWith(amr,'qacC')) {
+        mechanismclasslist <- c(mechanismclasslist,'qacC')
+      }else if(startsWith(amr,'norM')) {
+        mechanismclasslist <- c(mechanismclasslist,'norM')
+      }else if((startsWith(amr,'ponA')) | (startsWith(amr,'pbp2'))) {
+        mechanismclasslist <- c(mechanismclasslist,'PBP variant')
+      }
+    }
+  }
+  return(unique(mechanismclasslist))
+}
+# accepts a vector of strings of comma separated amr values (with no spaces)
+mechanism_class_all <- function(amrlistlist) {
+  mechclasslistall <- c()
+  for(n in 1:length(amrlistlist)) {
+    mechclasslistall <- unique(c(mechclasslistall, mechanism_class(amrlistlist[n])))
+  }
+  return(mechclasslistall)
+}
+mechanism_class_count <- function(amrlistlist,mechclasslistall) {
+  dfcount <- data.frame(matrix(0,nrow=(length(mechclasslistall)),ncol=1))
+  colnames(dfcount) <- c('Count')
+  rownames(dfcount) <- mechclasslistall
+  for(n in 1:length(amrlistlist)) {
+    amrlist <- mechanism_class(amrlistlist[n])
+    for(m in 1:length(amrlist)) {
+      amr <- amrlist[m]
+      dfcount[amr,'Count'] <- dfcount[amr,'Count'] + 1
+    }
+  }
+  return(dfcount)
+}
+mechclasslist <- mechanism_class_all(dframe1$AMR.Gene.symbol)
+mechclasslist
+dfcount <- mechanism_class_count(dframe1$AMR.Gene.symbol,mechclasslist)
+
+countrylist
+# Sort countries into continents
+categorise_continent <- function(country){
+  returncontinent <- switch(country, 'Australia' = 'Oceania', 'New Zealand' = 'Oceania', 
+                'Netherlands' = 'Europe', 'Estonia' = 'Europe', 'Latvia' = 'Europe', 
+                'Switzerland' = 'Europe', 'Scotland' = 'Europe', 'Norway' = 'Europe',
+                'Hungary' = 'Europe', 'Denmark' = 'Europe', 'Spain' = 'Europe', 
+                'Belgium' = 'Europe', 'Malta' = 'Europe', 'Romania' = 'Europe',
+                'Lithuania' = 'Europe', 'Poland' = 'Europe', 'Portugal' = 'Europe',
+                'Czechia' = 'Europe', 'Cyprus' = 'Europe', 'Finland' = 'Europe',
+                'Croatia' = 'Europe', 'Ukraine' = 'Europe', 'Turkey' = 'Asia',
+                'Saudi Arabia' = 'Asia', 'Austria' = 'Europe', 'Slovakia' = 'Europe',
+                'Germany' = 'Europe', 'Ireland' = 'Europe', 'Belarus' = 'Europe',
+                'Russia' = 'Europe', 'Bulgaria' = 'Europe', 'Sweden' = 'Europe',
+                'Italy' = 'Europe', 'Slovenia' = 'Europe', 'France' = 'Europe',
+                'Greece' = 'Europe', 'Iceland' = 'Europe', 'Brazil' = 'AMR',
+                'Japan' = 'Asia', 'China' = 'Asia', 'Guinea-Bissau' = 'Africa', 
+                'India' = 'Asia', 'Chile' = 'AMR', 'Tanzania' = 'Africa',
+                'Armenia' = 'Asia', 'Ecuador' = 'AMR', 'Vietnam' = 'Asia',
+                'Philippines' = 'Asia', 'Korea' = 'Asia', 'Pakistan' = 'Asia', 
+                'Gambia' = 'Africa', 'Caribbean' = 'North America', 'USA' = 'North America',
+                'UK' = 'Europe', 'Suriname' = 'Africa', 'Angola' = 'Africa',
+                'South Africa' = 'Africa', 'Argentina' = 'AMR', 'Thailand' = 'Asia',
+                'Singapore' = 'Asia', 'Canada' = 'North America', 'Brazil' = 'AMR',
+                'Guinea' = 'Africa', 'Kenya' = 'Africa', 'Hong Kong' = 'Asia', 'Bhutan' = 'Asia',
+                'Ivory Coast' = 'Africa', 'Malaysia' = 'Asia', 'Indonesia' = 'Asia',
+                'Morocco' = 'Africa', 'Uganda' = 'Africa')
+  if(is.null(returncontinent) == TRUE) {
+    return('')
+  }else {
+    return(returncontinent)
+  }
+
+}
+categorise_who_region <- function(country){
+  returncontinent <- switch(country, 'Australia' = 'WPR', 'New Zealand' = 'WPR', 
+                            'Netherlands' = 'EUR', 'Estonia' = 'EUR', 'Latvia' = 'EUR', 
+                            'Switzerland' = 'EUR', 'Scotland' = 'EUR', 'Norway' = 'EUR',
+                            'Hungary' = 'EUR', 'Denmark' = 'EUR', 'Spain' = 'EUR', 
+                            'Belgium' = 'EUR', 'Malta' = 'EUR', 'Romania' = 'EUR',
+                            'Lithuania' = 'EUR', 'Poland' = 'EUR', 'Portugal' = 'EUR',
+                            'Czechia' = 'EUR', 'Cyprus' = 'EUR', 'Finland' = 'EUR',
+                            'Croatia' = 'EUR', 'Ukraine' = 'EUR', 'Turkey' = 'EUR',
+                            'Saudi Arabia' = 'EMR', 'Austria' = 'EUR', 'Slovakia' = 'EUR',
+                            'Germany' = 'EUR', 'Ireland' = 'EUR', 'Belarus' = 'EUR',
+                            'Russia' = 'EUR', 'Bulgaria' = 'EUR', 'Sweden' = 'EUR',
+                            'Italy' = 'EUR', 'Slovenia' = 'EUR', 'France' = 'EUR',
+                            'Greece' = 'EUR', 'Iceland' = 'EUR', 'Brazil' = 'AMR',
+                            'Japan' = 'WPR', 'China' = 'WPR', 'Guinea-Bissau' = 'AFR', 
+                            'India' = 'SEAR', 'Chile' = 'AMR', 'Tanzania' = 'AFR',
+                            'Armenia' = 'EUR', 'Ecuador' = 'AMR', 'Vietnam' = 'WPR',
+                            'Philippines' = 'WPR', 'Korea' = 'WPR', 'Pakistan' = 'EMR', 
+                            'Gambia' = 'AFR', 'Caribbean' = 'AMR', 'USA' = 'AMR',
+                            'UK' = 'EUR', 'Suriname' = 'AMR', 'Angola' = 'AFR',
+                            'South Africa' = 'AFR', 'Argentina' = 'AMR', 'Thailand' = 'SEAR',
+                            'Singapore' = 'WPR', 'Canada' = 'AMR', 'Brazil' = 'AMR',
+                            'Guinea' = 'AFR', 'Kenya' = 'AFR', 'Hong Kong' = 'WPR', 'Bhutan' = 'SEAR',
+                            'Ivory Coast' = 'AFR', 'Malaysia' = 'WPR', 'Indonesia' = 'SEAR',
+                            'Morocco' = 'EMR', 'Uganda' = 'AFR')
+}
+  if(is.null(returncontinent) == TRUE) {
+    return('')
+  }else {
+    return(returncontinent)
+  }
+# redo country x resistance genes with continental groups so data is easier to read
+# to do, will have to modify vectors and df
+# as well as remake and repopulate them
+
+continent <- c()
+for(n in 1:length(countryamrcountry)) {
+  continent <- c(continent, categorise_continent(countryamrcountry[n]))
+}
+newcontinent <- c()
+for(n in 1:length(countryamrcountry)) {
+  newcontinent <- c(newcontinent, categorise_who_region(countryamrcountry[n]))
+}
+
+dfcontinentamr <- data.frame(countryamrnorm,countryamramr,countryamrcountry,continent)
+
+{
+  caslistall <- main_cas_list(dframe1$Genes)
+  countryamr <- matrix(0,nrow=length(countrylist),ncol=length(mechclasslist))
+  colnames(countryamr) <- mechclasslist
+  rownames(countryamr) <- countrylist
+  countrycas <- matrix(0,nrow=length(countrylist),ncol=length(caslistall))
+  colnames(countrycas) <- caslistall
+  rownames(countrycas) <- countrylist
+  
+  for(r in 1:nrow(dframe1)) {
+    if(!(dframe1$Country[r] == '')) {
+      if(!(dframe1$Genes[r] == '')) {
+        caslist <- categorise_cas(dframe1$Genes[r])
+        for(n in 1:length(caslist)) {
+          cas <- caslist[n]
+          if(cas %in% caslistall){
+            countrycas[dframe1$Country[r],cas] <- 
+              countrycas[dframe1$Country[r],cas] + 1
+          }
+        }
+      }
+      if(!(dframe1$AMR.Gene.symbol[r] == '')) {
+        amrlist <- mechanism_class(dframe1$AMR.Gene.symbol[r])
+        for(m in 1:length(amrlist)) {
+          amr <- amrlist[m]
+          if(amr %in% mechclasslist) {
+            countryamr[dframe1$Country[r],amr] <-
+              countryamr[dframe1$Country[r],amr] + 1
+          }
+        }
+      }
+    }
+  }
+  # create normed vectors for ggplot
+  countryamrnorm <- c()
+  countryamramr <- c()
+  countryamrcountry <- c()
+  for(r in 1:nrow(countryamr)) {
+    for(c in 1:ncol(countryamr)) {
+      countryamrnorm <- c(countryamrnorm,(countryamr[r,c] / sum(countryamr[r,])))
+      countryamramr <- c(countryamramr, colnames(countryamr)[c])
+      countryamrcountry <- c(countryamrcountry, rownames(countryamr)[r])
+    }
+  }
+  countrycasnorm <- c()
+  countrycascas <- c()
+  countrycascountry <- c()
+  for(r in 1:nrow(countrycas)) {
+    for(c in 1:ncol(countrycas)) {
+      countrycasnorm <- c(countrycasnorm,(countrycas[r,c] / sum(countrycas[r,])))
+      countrycascas <- c(countrycascas, colnames(countrycas)[c])
+      countrycascountry <- c(countrycascountry, rownames(countrycas)[r])
+    }
+  }
+  print(length(countrycasnorm))
+  print(length(countrycascas))
+  print(length(countrycascountry))
+  dfcountrycas <- data.frame(countrycasnorm,countrycascas,countrycascountry)
+  dfcountryamr <- data.frame(countryamrnorm,countryamramr,countryamrcountry)
+}
+## auto generate plots for each continent
+# make continent list
+allcontinents <- c()
+for(r in 1:nrow(dframe1)) {
+  if(categorise_continent(dframe1$Country[r]) == '' ) {next}
+  allcontinents <- unique(c(allcontinents,categorise_continent(dframe1$Country[r])))
+}
+{
+  filename <- ''
+  tempcountryamr <- c()
+  tempcountryamrnorm <- c()
+  tempcountryamrcountry <- c()
+  tempdataframe <- data.frame()
+for(n in 1:length(allcontinents)) {
+  filename <- paste0(allcontinents[n],'countryxamr.svg', sep = '_')
+  #svg(filename=paste0('~','pracs','countryamr',filename, sep = '/'), width=1080)
+    tempcountryamr <- dfcontinentamr$countryamramr[dfcontinentamr$continent == allcontinents[n]]
+    tempcountryamrnorm <- dfcontinentamr$countryamrnorm[dfcontinentamr$continent == allcontinents[n]]
+    tempcountryamrcountry <- dfcontinentamr$countryamrcountry[dfcontinentamr$continent == allcontinents[n]]
+    tempdataframe <- data.frame(tempcountryamrnorm,tempcountryamr,tempcountryamrcountry)
+    print(ggplot(tempdataframe,aes(fill=tempcountryamr, y=tempcountryamrnorm, x=tempcountryamrcountry)) + 
+      geom_bar(position='stack', stat='identity',position_dodge2(width = 0.9, preserve = "single")) +
+      #ggtitle('Relative frequency of Resistance genes found by Country') +
+      xlab('Country') + ylab('Resistance Gene Frequency') +
+      labs(color='Gene') + coord_flip() + theme_minimal() + 
+      scale_y_continuous(labels = scales::percent) + theme(legend.position = "none"))
+    #dev.off()
+}
+}
+  
+ggplot(dfcontinentamr,aes(fill=countryamramr, y=countryamrnorm, x=countryamrcountry)) + 
+  geom_bar(position='stack', stat='identity') +
+  ggtitle('Relative frequency of Resistance genes found by Country') +
+  xlab('Country') + ylab('Resistance Gene Frequency') +
+  labs(color='Gene') + coord_flip() + theme_minimal() + 
+  scale_y_continuous(labels = scales::percent) + theme(legend.position = "none")
+
+
+dframe1$Country[dframe1$Country == 'The Netherlands'] <- 'Netherlands'
+dframe1$Country[dframe1$Country == 'United Kingdom'] <- 'UK'
+dframe1$Country[dframe1$Country == 'Cabo Verde'] <- 'Brazil'
+dframe1$Country[dframe1$Country == 'Brasil'] <- 'Brazil'
+dfcontinentamr$continent[dfcontinentamr$continent == 'Oceania']
+
+newdfcontinentamr <- data.frame(countryamrnorm,countryamramr,countryamrcountry,newcontinent)
+
+
+testplot <- ggplot(newdfcontinentamr,aes(colour = countryamramr, fill = countryamramr, y = countryamrnorm,
+               x = countryamrcountry)) + 
+  geom_bar(position="stack", stat="identity",  width=.7) +
+  theme_classic() + xlab('Country') + ylab('Resistance Gene Frequency') +
+  theme(legend.position = 'None')  + labs(color='Gene') +
+  facet_grid(.~newcontinent,scales = 'free',space = 'free',drop = F) + 
+  scale_y_continuous(labels = scales::percent) + guides(x =  guide_axis(angle = 45))
+
+## Function to extract legend
+g_legend <- function(a.gplot){ 
+  tmp <- ggplot_gtable(ggplot_build(a.gplot)) 
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
+  legend <- tmp$grobs[[leg]] 
+  legend
+} 
+
+legend <- g_legend(geobycas) 
+library(grid)
+grid.newpage()
+grid.draw(legend) 
+testplot
+sexbyresistanceold
+
+# geography by cas plot
+cascontinent <- c()
+for(n in 1:length(countrycascountry)) {
+  cascontinent <- c(cascontinent, categorise_who_region(countrycascountry[n]))
+}
+dfgeobycas <- data.frame(countrycasnorm,countrycascas,countrycascountry,cascontinent)
+geobycas <- ggplot(dfgeobycas,aes(colour = countrycascas, fill = countrycascas, y = countrycasnorm,
+                                         x = countrycascountry)) + 
+  geom_bar(position="stack", stat="identity",  width=.7) +
+  theme_classic() + xlab('Country') + ylab('Resistance Gene Frequency') +
+   labs(color='Gene') +
+  facet_grid(.~cascontinent,scales = 'free',space = 'free',drop = F) + 
+  scale_y_continuous(labels = scales::percent) + guides(x =  guide_axis(angle = 90))
+geobycas
+
+# sex networks by new amr cat
+# list all new amr cats - mechclasslist
+# list all sex networks - catbehlist
+# make matrix
+sexbyamrmatrix <- matrix(0,nrow=length(catbehlist),ncol=length(mechclasslist))
+rownames(sexbyamrmatrix) <- catbehlist
+colnames(sexbyamrmatrix) <- mechclasslist
+for(r in 1:nrow(countmatrix)) {
+  for(c in 1:ncol(countmatrix)) {
+    sexbyamrmatrix[rownames(countmatrix)[r],mechanism_class(colnames(countmatrix)[c])] <-
+      sexbyamrmatrix[rownames(countmatrix)[r],mechanism_class(colnames(countmatrix)[c])] +
+      countmatrix[r,c]
+  }
+}
+
+sexbyamrcount <- c()
+sexbyamramr <- c()
+sexbyamrbeh <- c()
+for(r in 1:nrow(sexbyamrmatrix)) {
+  for(c in 1:ncol(sexbyamrmatrix)) {
+    sexbyamrcount <- c(sexbyamrcount,sexbyamrmatrix[r,c])
+    sexbyamrbeh <- c(sexbyamrbeh,rownames(sexbyamrmatrix)[r])
+    sexbyamramr <- c(sexbyamramr,colnames(sexbyamrmatrix)[c])
+  }
+}
+colnames(sexbyamrmatrix)
+dfsexbyamr <- data.frame(sexbyamrcount,sexbyamramr,sexbyamrbeh)
+
+ggplot(dfsexbyamr, aes(x = sexbyamrbeh, y = sexbyamrcount)) + 
+  geom_boxplot(outlier.shape = NA) +
+  ylab('Number of resistance class genes found') +
+  xlab('Sex Networks') + labs(color='AMR gene') +
+  ggtitle('Resistances identified by Sex Networks in Neisseria gonorrhoeae') +
+  geom_jitter(aes(colour=sexbyamramr), show.legend = F) +
+  coord_flip() + theme_minimal()
+
+# now do sex by cas gene boxplot
+# get list of cas genes - caslistall
+# get list of behaviours - catbehlist
+sexbycasmatrix <- matrix(0,nrow=length(catbehlist),ncol=length(caslistall))
+rownames(sexbycasmatrix) <- catbehlist
+colnames(sexbycasmatrix) <- caslistall
+
+# make an easier single structure
+Genes <- c()
+Sexual.behaviour <- c()
+AMR.Gene.symbol <- c()
+for(m in 1:nrow(metadatamaster)) {
+  for(d in 1:nrow(dframe1)) {
+    if(metadatamaster$displayname[m] == dframe1$id[d]) {
+      Genes <- c(Genes,metadatamaster$dframe1$Genes[d])
+      Sexual.behaviour <- c(Sexual.behaviour,metadatamaster$Sexual.behaviour)
+      AMR.Gene.symbol <- c(AMR.Gene.symbol,dframe1$AMR.Gene.symbol)
+      print(paste(m,d))
+    }
+  }
+}
+
+dframesex1 <- data.frame(dframe1$id[-12115],dframe1$Country[-12115],dframe1$Genes[-12115],dframe1$AMR.Gene.symbol[-12115],
+rep('',35311),rep('',35311))
+rownames(dframesex1) <- dframe1$id[-12115]
+colnames(dframesex1) <- c('id','Country','Genes','AMR.Gene.symbol','Host.sex','Sexual.behaviour')
+for(r in 1:nrow(metadatamaster)) {
+  dframesex1[metadatamaster$displayname[r],'Host.sex'] <- metadatamaster$Host.sex[r]
+  dframesex1[metadatamaster$displayname[r],'Sexual.behaviour'] <- metadatamaster$Sexual.behaviour[r]
+  dframesex1[paste(metadatamaster$displayname[r],'1',sep='_'),'Host.sex'] <- metadatamaster$Host.sex[r]
+  dframesex1[paste(metadatamaster$displayname[r],'1',sep='_'),'Sexual.behaviour'] <- metadatamaster$Sexual.behaviour[r]
+  print(r)
+}
+dframesex1['SAMN10921003_1',]
+
+write.csv(dframesex1,file='~/PRACS/results/dframesex1.csv')
