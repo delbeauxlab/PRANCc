@@ -15,3 +15,9 @@ dag*
 __pycache__/
 questions.txt
 /ng
+/FileContentIndex/
+/v17
+sqln.sqlite
+VSWorkspaceState.json
+*.jfm
+.vs/
