@@ -64,6 +64,14 @@ git clone https://github.com/CRISPRlab/CRISPRdisco.git
 # can run CRISPRdisco from cd /dev/sdb/docker/CRISPRdisco; ./disco.sh
 
 # Install R for R-based programs (CRISPRclassify)
+sudo apt update
+sudo apt -y upgrade
+
+sudo apt-get install openjdk-18-jdk
+sudo apt -y install r-base
+
+# Using R, install package
+Rscript -e 'install.packages("devtools", repos="https://cloud.r-project.org")'
 
 # shutdown after we're done
 #shutdown
