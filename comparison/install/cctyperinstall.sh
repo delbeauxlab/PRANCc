@@ -3,6 +3,7 @@
 curl -L -O "https://github.com/conda-forge/miniforge/releases/download/25.1.1-2/Miniforge3-25.1.1-2-Linux-x86_64.sh"
 # run install script in non-interactive mode
 bash Miniforge3-25.1.1-2-Linux-x86_64.sh -b
+rm Miniforge3-25.1.1-2-Linux-x86_64.sh
 
 
 ~/miniforge3/bin/conda init
