@@ -12,6 +12,9 @@ curl -L -O "https://github.com/conda-forge/miniforge/releases/download/25.1.1-2/
 bash Miniforge3-25.1.1-2-Linux-x86_64.sh -b
 rm Miniforge3-25.1.1-2-Linux-x86_64.sh
 
+sudo apt-get update
+sudo apt-get install build-essentials
+
 ~/miniforge3/bin/conda init
 
 # Install PADLOC into a new conda environment
