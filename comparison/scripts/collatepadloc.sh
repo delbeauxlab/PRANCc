@@ -1,10 +1,12 @@
 #!/bin/bash
 
 # Directory containing text files
-input_dir="../../results/padlocresults"
+# input_dir="../../results/padlocresults"
+input_dir=${1"../../results/padlocresults"}
 
 # Output TSV file
-output_file="../../results/padlocresults.tsv"
+# output_file="../../results/padlocresults.tsv"
+output_file=${2:-"../../results/padlocresults.tsv"}
 
 # Clear the output file if it already exists
 > "$output_file"

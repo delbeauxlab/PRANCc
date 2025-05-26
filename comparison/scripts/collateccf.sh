@@ -1,10 +1,12 @@
 #!/bin/bash
 
 # Directory containing text files
-input_dir="../../results/ccfresults"
+# input_dir="../../results/ccfresults"
+input_dir=${1:-"../../results/ccfresults"}
 
 # Output TSV file
-output_file="../../results/ccfresults.tsv"
+# output_file="../../results/ccfresults.tsv"
+output_file=${2:-"../../results/ccfresults.tsv"}
 
 # Clear the output file if it already exists
 > "$output_file"

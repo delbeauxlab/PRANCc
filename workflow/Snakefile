@@ -93,10 +93,11 @@ rule padloc:
     shell:'''
         padloc --fna {input[0]} --crispr {input[1]} --outdir {ouput} --cpu {threads}
         '''
-        
+
 rule collateccf:
     input:
         "results/ccfinder/{seq}"
     output:
         "results/ccfinder.tsv"
-    threads
+    threads: 1
+    shell: "./../../comparison/scripts/collateccfargs.sh {input} {ouput}"
