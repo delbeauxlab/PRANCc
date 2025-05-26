@@ -1,5 +1,6 @@
 # PRANCc
 : a Pipeline Researching AMR, Neisseria spp., and CRISPR correlations
+v0.2.0-alpha
 
 Copyright (C) 2023  Tyler Hall, Samantha J. Webster
 
@@ -7,10 +8,59 @@ PRANCc is a pipeline **in progress** to find and identify *cas* genes and CRISPR
 
 This project was started with data from [Pathogenwatch](https://pathogen.watch) and uses the collected metadata as well as inferred AMR types/NG Star data to verify detected genes. Using that metadata we can also conduct analyses on geographic spread, patterns over time and from sexual behaviour of the hosts.
 
-At the moment this project is fixed to run only for Neisseria gonorrhoeae (N.g.) but when it is finished I want to expand it to at least the organisms covered by AMRFinder++ (~20 or so) and automatically run on multiple organisms automatically.
-
 ## Installation
-Still a work in progress, but you can clone this repository and run the python scripts yourself. Later versions will have automatic workflow management with Snakemake.
+To install, install the prerequisites, or ask your system admin to. comparison/install/awsinstall.sh is how I installed these prereqs, but that script is provided as-is and is Ubuntu/Debian specific. For compatibility reasons, it's best to install this on a clean slate. Due to the HMM model requirements of CRISPRIdentify, this installer will download about 1GB.
+
+### Installs
+
+* [CrisprCasFinder](https://github.com/dcouvin/CRISPRCasFinder) (into Conda environment 'crisprcasfinder')
+    * [MacSyFinder](https://github.com/gem-pasteur/macsyfinder)
+    * [CasFinder](https://github.com/macsy-models/CasFinder)
+* [PADLOC](https://github.com/padlocbio/padloc/tree/master) (into Conda environment 'padloc')
+    * [CrisprDetect](https://github.com/ambarishbiswas/CRISPRDetect_2.2)
+* [CrisprCasTyper](https://github.com/Russel88/CRISPRCasTyper)
+* [CRISPRIdentify](https://github.com/BackofenLab/CRISPRidentify)
+* [gdown](https://github.com/wkentaro/gdown)
+* the various prereqs of those programs
+
+### Prerequisites
+
+* Linux
+* Conda
+* Mamba (I recommend installing Miniforge which includes both Conda and Mamba. You can find it at https://github.com/conda-forge/miniforge)
+* Snakemake
+* build-essentials (or your Linux flavour of `make`, if not installed by default)
+ 
+### Setup
+
+1. Download and extract this repository 
+1. Make sure the preequisites are installed and ready to use (make sure Conda and Mamba are initialised, particularly!)
+1. Run comparison/install/snakeinstall.sh
+1. You're done!
+
+## Run
+
+1. Upload a tarball containing *just* the .fna files you want to analyse to prancc folder.
+1. Activate the snakemake environment (if you used my install script, `conda activate snakemake`)
+1. Navigate to where the PRANCc folder was extracted
+1. `snakemake`
+
+See https://snakemake.readthedocs.io/en/v5.1.4/executable.html for more information about executing snakemake workflows.
+
+## Output
+Produces a tarball results.tar.gz in the prancc folder containing:
+
+* The raw output of:
+    * CrisprCasFinder
+    * CrisprCasTyper
+    * CRISPRIdentify
+    * CrisprDetect
+    * PADLOC
+* .tsv sheets of the summarised output of:
+    * CrisprCasFinder
+    * CrisprCasTyper
+    * CRISPRIdentify
+    * PADLOC
 
 ## Contact us
-If you have any questions, please feel free to contact us! You can reach me at avcloudy@gmail.com, or both of us at research.ng.crispr@gmail.com. This is very much a work in progress!
+If you have any questions, please feel free to contact us! You can reach me at avcloudy@gmail.com, or both of us at delbeauxlab@gmail.com. This is very much a work in progress!
