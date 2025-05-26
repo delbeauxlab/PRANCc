@@ -1,0 +1,89 @@
+id, = glob_wildcards("resources/ng/bin/{isolate}.fasta")
+#id, = glob_wildcards("results/ng/cctyperresults/{isolate}.fasta/")
+metadataregions, = glob_wildcards("resources/ng/metadata{region}.csv")
+
+rule all:
+    input:
+        #expand("results/ng/cctyperresults/{isolate}/", isolate=id),
+        expand("results/ng/cctyperresults/{isolate}/cas_operons.tab", isolate=id, allow_missing=True),
+        "results/ng/collected_cas_operons.csv",
+        expand("results/ng/amrfinderresults/{isolate}.csv", isolate=id),
+        "results/ng/collected_amr_genes.csv",
+        "resources/ng/collected_metadata.csv",
+        "resources/ng/collected_ngstar.csv",
+        "results/ng/collected_all.csv"
+
+rule cctyper:
+    input:
+        expand("resources/ng/bin/{isolate}.fasta", isolate=id)
+    output:
+        #directory(expand("results/ng/cctyperresults/{isolate}/", isolate=id))
+        expand("results/ng/cctyperresults/{isolate}.fasta/cas_operons.tab", isolate=id, allow_missing=True)
+    threads: 4
+    conda:
+        "cctyper"
+        #"envs/cctyper.yaml"
+    shell:
+        """
+        cctyper {input} {output} --threads 4
+        """
+rule collect_cas:
+    input:
+        expand("results/ng/cctyperresults/{isolate}.fasta/cas_operons.tab", isolate=id, allow_missing=True)
+    output:
+        "results/ng/collected_cas_operons.csv"
+    conda:
+        "pandas"
+        #"envs/pandas.yaml"
+    script:
+        "workflow/scripts/collect_cctyper_output.py"
+
+rule amrfinderplusplus:
+    input:
+        expand("resources/ng/bin/{isolate}.fasta", isolate=id)
+    output:
+        expand("results/ng/amrfinderresults/{isolate}.csv", isolate=id)
+    # find out how many threads
+    conda:
+        "amrfinder"
+        #"envs/amrfinder.yaml"
+    shell:
+        "amrfinder -n {input} --organism Neisseria_gonorrhoeae -o {output}"
+
+rule collect_amr:
+    input:
+        expand("results/ng/amrfinderresults/{isolate}.csv", isolate=id)
+    output:
+        "results/ng/collected_amr_genes.csv"
+    conda:
+        "pandas"
+        #envs/pandas.yaml"
+    script:
+        "workflow/scripts/collect_amrfinder_output.py"
+
+rule collect_metadata:
+    input:
+        expand("resources/ng/metadata{region}.csv", region=metadataregions),
+        expand("resources/ng/ngstar{region}.csv", region=metadataregions)
+    output:
+        "resources/ng/collected_metadata.csv",
+        "resources/ng/collected_ngstar.csv"
+    conda:
+        "pandas"
+        #"envs/pandas.yaml"
+    script:
+        "workflow/scripts/collate_metadata.py"
+
+rule collect_all:
+    input:
+        "results/ng/collected_cas_operons.csv",
+        "results/ng/collected_amr_genes.csv",
+        "resources/ng/collected_metadata.csv",
+        "resources/ng/collected_ngstar.csv"
+    output:
+        "results/ng/collected_all.csv"
+    conda:
+        "pandas"
+        #"envs/pandas.yaml"
+    script:
+        "collateall.py"

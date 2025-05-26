@@ -1,89 +1,102 @@
-id, = glob_wildcards("resources/ng/bin/{isolate}.fasta")
-#id, = glob_wildcards("results/ng/cctyperresults/{isolate}.fasta/")
-metadataregions, = glob_wildcards("resources/ng/metadata{region}.csv")
+# configfile: config.yaml
+
+# SAMPLES = []
 
 rule all:
     input:
-        #expand("results/ng/cctyperresults/{isolate}/", isolate=id),
-        expand("results/ng/cctyperresults/{isolate}/cas_operons.tab", isolate=id, allow_missing=True),
-        "results/ng/collected_cas_operons.csv",
-        expand("results/ng/amrfinderresults/{isolate}.csv", isolate=id),
-        "results/ng/collected_amr_genes.csv",
-        "resources/ng/collected_metadata.csv",
-        "resources/ng/collected_ngstar.csv",
-        "results/ng/collected_all.csv"
+
+checkpoint extract:
+    input:
+        "upload.tar.gz"
+    output:
+        directory("upload")
+    shell:'''
+    rm -r upload
+    mkdir upload
+    tar -xzvf upload.tar.gz -C upload
+    '''
+
+def aggregate_input(wildcards):
+    checkpoint_output = checkpoints.extract.get(**wildcards).output[0]
+    return expand("upload/{seq}.fna", 
+        i=glob_wildcards(os.path.join(checkpoint_output, {seq}.fna)).seq)
+
+rule list_inputs:
+    input:
+        aggregate_input
+    output:
+        "results/input_list.txt"
+    shell:'''
+        rm -r results
+        mkdir results
+        {input} > {output}
+        '''
 
 rule cctyper:
-    input:
-        expand("resources/ng/bin/{isolate}.fasta", isolate=id)
+    input: 
+        "upload/{seq}.fna"
     output:
-        #directory(expand("results/ng/cctyperresults/{isolate}/", isolate=id))
-        expand("results/ng/cctyperresults/{isolate}.fasta/cas_operons.tab", isolate=id, allow_missing=True)
-    threads: 4
+        "results/cctyper/{seq}"
+    threads: 8
     conda:
-        "cctyper"
-        #"envs/cctyper.yaml"
-    shell:
-        """
-        cctyper {input} {output} --threads 4
-        """
-rule collect_cas:
-    input:
-        expand("results/ng/cctyperresults/{isolate}.fasta/cas_operons.tab", isolate=id, allow_missing=True)
-    output:
-        "results/ng/collected_cas_operons.csv"
-    conda:
-        "pandas"
-        #"envs/pandas.yaml"
-    script:
-        "workflow/scripts/collect_cctyper_output.py"
+        "envs/cctyper.yaml"
+    shell:'''
+        mkdir {output}
+        cctyper --threads {threads} {input} {output}
+        '''
 
-rule amrfinderplusplus:
+rule ccfinder:
     input:
-        expand("resources/ng/bin/{isolate}.fasta", isolate=id)
+        "upload/{seq}.fna"
     output:
-        expand("results/ng/amrfinderresults/{isolate}.csv", isolate=id)
-    # find out how many threads
-    conda:
-        "amrfinder"
-        #"envs/amrfinder.yaml"
-    shell:
-        "amrfinder -n {input} --organism Neisseria_gonorrhoeae -o {output}"
+        "results/ccfinder/{seq}"
+    threads: 1
+    shell:'''
+        perl bin/ccfinder/CRISPRCasFinder.pl --in {input} --out {output}}
+        '''
 
-rule collect_amr:
+rule cidentify:
     input:
-        expand("results/ng/amrfinderresults/{isolate}.csv", isolate=id)
+        "upload/{seq}.fna"
     output:
-        "results/ng/collected_amr_genes.csv"
+        "results/ci/"
+    threads: 1
     conda:
-        "pandas"
-        #envs/pandas.yaml"
-    script:
-        "workflow/scripts/collect_amrfinder_output.py"
 
-rule collect_metadata:
-    input:
-        expand("resources/ng/metadata{region}.csv", region=metadataregions),
-        expand("resources/ng/ngstar{region}.csv", region=metadataregions)
-    output:
-        "resources/ng/collected_metadata.csv",
-        "resources/ng/collected_ngstar.csv"
-    conda:
-        "pandas"
-        #"envs/pandas.yaml"
-    script:
-        "workflow/scripts/collate_metadata.py"
+    shell:'''
+        python bin/cidentify/CRISPRidentify.py --file {input} --result_folder {output}}
+        '''
 
-rule collect_all:
+rule cdetect:
     input:
-        "results/ng/collected_cas_operons.csv",
-        "results/ng/collected_amr_genes.csv",
-        "resources/ng/collected_metadata.csv",
-        "resources/ng/collected_ngstar.csv"
+        "upload/{seq}.fna"
     output:
-        "results/ng/collected_all.csv"
+        "results/cdetect/{seq}.1_crispr",
+        "results/cdetect/{seq}.1_crispr.gff",
+        "results/cdetect/{seq}.1_crispr.fp",
+    threads: 1
     conda:
-        "pandas"
-        #"envs/pandas.yaml"
-    script:
-        "collateall.py"
+        "padloc"
+    shell:'''
+        run-crisprdetect --input {input} --output {output[0]}
+        '''
+
+rule padloc:
+    input:
+        "upload/{seq}.fna",
+        "results/cdetect/{seq}.!_crispr.gff",
+    output:
+        "results/padloc/{seq}"
+    threads: 8
+    conda:
+        "padloc"
+    shell:'''
+        padloc --fna {input[0]} --crispr {input[1]} --outdir {ouput} --cpu {threads}
+        '''
+        
+rule collateccf:
+    input:
+        "results/ccfinder/{seq}"
+    output:
+        "results/ccfinder.tsv"
+    threads
