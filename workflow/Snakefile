@@ -1,9 +1,6 @@
-# configfile: config.yaml
-
-# SAMPLES = []
-
 rule all:
     input:
+        "../results.tar.gz"
 
 checkpoint extract:
     input:
@@ -25,10 +22,10 @@ rule list_inputs:
     input:
         aggregate_input
     output:
-        "results/input_list.txt"
+        "../results/input_list.txt"
     shell:'''
-        rm -r results
-        mkdir results
+        rm -r ../results
+        mkdir ../results
         {input} > {output}
         '''
 
@@ -36,68 +33,137 @@ rule cctyper:
     input: 
         "upload/{seq}.fna"
     output:
-        "results/cctyper/{seq}"
+        "../results/cctyper/",
+        "../results/cctyper/{seq}",
     threads: 8
     conda:
         "envs/cctyper.yaml"
     shell:'''
-        mkdir {output}
-        cctyper --threads {threads} {input} {output}
+        mkdir {output[0]}
+        cctyper --threads {threads} {input} {output[1]}
         '''
 
 rule ccfinder:
     input:
         "upload/{seq}.fna"
     output:
-        "results/ccfinder/{seq}"
+        "../results/ccfinder/",
+        "../results/ccfinder/{seq}",
     threads: 1
+    conda:
+        "crisprcasfinder"
     shell:'''
-        perl bin/ccfinder/CRISPRCasFinder.pl --in {input} --out {output}}
+        mkdir {output[0]}
+        perl bin/ccfinder/CRISPRCasFinder.pl --in {input} --out {output[1]}}
         '''
 
 rule cidentify:
     input:
         "upload/{seq}.fna"
     output:
-        "results/ci/"
+        "../results/ci/"
     threads: 1
     conda:
 
     shell:'''
+        mkdir {output}
         python bin/cidentify/CRISPRidentify.py --file {input} --result_folder {output}}
         '''
 
+rule cdetectfolder:
+    input:
+        "../results/"
+    output:
+        "../results/cdetect"
+    threads: 1
+    shell:'''
+    rm -r {output}
+    mkdir {output}
+    '''
+
 rule cdetect:
     input:
-        "upload/{seq}.fna"
+        "../results/cdetect",
+        "upload/{seq}.fna",
     output:
-        "results/cdetect/{seq}.1_crispr",
-        "results/cdetect/{seq}.1_crispr.gff",
-        "results/cdetect/{seq}.1_crispr.fp",
+        "../results/cdetect/{seq}.1_crispr",
+        "../results/cdetect/{seq}.1_crispr.gff",
+        "../results/cdetect/{seq}.1_crispr.fp",
     threads: 1
     conda:
         "padloc"
     shell:'''
-        run-crisprdetect --input {input} --output {output[0]}
+        run-crisprdetect --input {input[0]} --output {output[0]}
         '''
 
 rule padloc:
     input:
         "upload/{seq}.fna",
-        "results/cdetect/{seq}.!_crispr.gff",
+        "../results/cdetect/{seq}.!_crispr.gff",
     output:
-        "results/padloc/{seq}"
+        "../results/padloc",
+        "../results/padloc/{seq}",
     threads: 8
     conda:
         "padloc"
     shell:'''
-        padloc --fna {input[0]} --crispr {input[1]} --outdir {ouput} --cpu {threads}
+        padloc --fna {input[0]} --crispr {input[1]} --outdir {ouput[1]} --cpu {threads}
         '''
 
 rule collateccf:
     input:
-        "results/ccfinder/{seq}"
+        "../results/ccfinder/"
     output:
-        "results/ccfinder.tsv"
+        "../results/ccfinder.tsv"
     threads: 1
-    shell: "./../../comparison/scripts/collateccfargs.sh {input} {ouput}"
+    shell: "./../../comparison/scripts/collateccf.sh {input} {ouput}"
+
+rule collatecct:
+    input: 
+        "../results/cctyper/"
+    output:
+        "../results/cctyper.tsv"
+    threads: 1
+    shell: "./../../comparison/scripts/collatecct.sh {input} {output}"
+
+# rule collatecctputative:
+#     input: 
+#         "../results/cctyper/"
+#     output:
+#         "../results/cctyperputative.tsv"
+#     threads: 1
+#     shell: "./../../comparison/scripts/collatecct.sh {input} {output}"
+
+rule collateci:
+    input:
+        "../results/ci"
+    output:
+        "../results/ci.tsv"
+    threads: 1
+    shell: "./../../comparison/scripts/collateci.sh {input} {output}"
+
+rule collatepadloc:
+    input:
+        "../results/padloc"
+    output:
+        "../results/padloc.tsv"
+    shell: "./../../comparison/scripts/collatepadloc.sh {input} {output}"
+
+rule compress:
+    input:
+        "../results/cctyper/",
+        "../results/ccfinder/",
+        "../results/cidentify",
+        "../results/cdetect",
+        "../results/padloc",
+        "../results/cctyper.tsv",
+        "../results/ccfinder.tsv",
+        "../results/cidentify.tsv",
+        "../results/padloc.tsv"
+    output:
+        "../results.tar.gz"
+    threads: 1
+    shell:'''
+        cd ..
+        tar -cvzf {output} results
+        '''
