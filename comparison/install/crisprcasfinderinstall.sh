@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
 # download miniforge installer from github
 curl -L -O "https://github.com/conda-forge/miniforge/releases/download/25.1.1-2/Miniforge3-25.1.1-2-Linux-x86_64.sh"
 # run install script in non-interactive mode

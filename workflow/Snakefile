@@ -4,19 +4,19 @@ rule all:
 
 checkpoint extract:
     input:
-        "upload.tar.gz"
+        "../upload.tar.gz"
     output:
-        directory("upload")
+        directory("../upload")
     shell:'''
-    rm -r upload
-    mkdir upload
-    tar -xzvf upload.tar.gz -C upload
+    rm -r {output}
+    mkdir {output}
+    tar -xzvf {input} }-C {output}
     '''
 
 def aggregate_input(wildcards):
     checkpoint_output = checkpoints.extract.get(**wildcards).output[0]
-    return expand("upload/{seq}.fna", 
-        i=glob_wildcards(os.path.join(checkpoint_output, {seq}.fna)).seq)
+    return expand("../upload/{seq}.fna", 
+        seq=glob_wildcards(os.path.join(checkpoint_output, {seq}.fna)).seq)
 
 rule list_inputs:
     input:
