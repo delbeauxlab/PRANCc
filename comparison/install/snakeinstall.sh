@@ -29,7 +29,7 @@ rm release-4.3.2.tar.gz v1.2.1.tar.gz v1.1.0.tar.gz
 
 conda init
 # create a new environment based on the ccf.environment.yml file
-conda env create -f prancc/bin/ccf/ccf.environment.yml -n crisprcasfinder
+conda env create -f prancc/bin/ccfinder/ccf.environment.yml -n crisprcasfinder
 
 conda activate crisprcasfinder
 # using mamba, install macysyfinder 2.1.2
