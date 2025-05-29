@@ -14,9 +14,9 @@ pip install gdown
 mkdir prancc/bin
 mkdir prancc/bin/ccfinder
 mkdir prancc/bin/cidentify
-curl -LOZ "https://github.com/dcouvin/CRISPRCasFinder/archive/refs/tags/release-4.3.2.tar.gz" \
- "https://github.com/BackofenLab/CRISPRidentify/archive/refs/tags/v1.2.1.tar.gz" \
- "https://github.com/BackofenLab/CRISPRcasIdentifier/archive/refs/tags/v1.1.0.tar.gz"
+curl -LO "https://github.com/dcouvin/CRISPRCasFinder/archive/refs/tags/release-4.3.2.tar.gz"
+curl -LO "https://github.com/BackofenLab/CRISPRidentify/archive/refs/tags/v1.2.1.tar.gz"
+curl -LO "https://github.com/BackofenLab/CRISPRcasIdentifier/archive/refs/tags/v1.1.0.tar.gz"
 
 gdown --fuzzy https://drive.google.com/file/d/1YbTxkn9KuJP2D7U1-6kL1Yimu_4RqSl1/view?usp=sharing
 gdown --fuzzy https://drive.google.com/file/d/1Nc5o6QVB6QxMxpQjmLQcbwQwkRLk-thM/view?usp=sharing
