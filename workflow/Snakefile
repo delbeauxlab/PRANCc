@@ -1,146 +1,161 @@
+import os
+
 SEQS = glob_wildcards("upload/{seq}.fna").seq
 
 rule all:
     input: 
         "results.tar.gz"
 
-rule list_inputs:
-    output:
-        "../results/input_list.txt"
-    shell:'''
-        rm -r ../results
-        mkdir ../results
-        {input} > {output}
-        '''
-
 rule check_folders:
+    input:
+        expand("upload/{seq}.fna", seq=SEQS)
     output:
-        "directory(results)",
-        "directory(results/cctyper)",
-        "directory(results/ccfinder)",
-        "directory(results/cidentify)",
-        "directory(results/cdetect)",
-        "directory(results/padloc)",
-    shell:'''
-        rm -r {output}
-        mkdir {output}
-        '''
+        directory("results"),
+        directory("results/cctyper"),
+        directory("results/cidentify"),
+        # directory("results/cdetect"),
+        directory("results/padloc"),
+    shell: "mkdir -p {output}"
+
+rule list_inputs:
+    input:
+        expand("upload/{seq}.fna", seq=SEQS)
+    output:
+        "input_list.txt"
+    shell: "echo {input} | tr ' ' '\n' > {output}"
 
 rule cctyper:
     input: 
-        expand("upload/{seq}.fna", seq=SEQS),
-        "directory(results/cctyper)",
+        a="input_list.txt",
+        b="results",
     output:
-        expand("directory(results/cctyper/{seq}/)", seq=SEQS)
-    threads: 8
+        directory(expand("results/cctyper/{seq}/", seq=SEQS))
+    threads: 2
     conda:
         "envs/cctyper.yaml"
     shell:'''
-        mkdir {output}
-        cctyper --threads {threads} {input[0]} {output}
+        while read file
+        do
+            filename=$(basename $file .fna)
+            cctyper --threads {threads} $file results/cctyper/$filename
+        done < {input.a}
         '''
-    
+
 rule ccfinder:
-    input: 
-        expand("upload/{seq}.fna", seq=SEQS),
-        "directory(results/ccfinder)",
+    input:
+        a="input_list.txt",
+        b="results",
     output:
-        expand("directory(results/ccfinder/{seq}/)", seq=SEQS)
+        directory("results/ccfinder/")
     threads: 1
     conda:
         "crisprcasfinder"
     shell:'''
-        mkdir {output}
-        perl bin/ccfinder/CRISPRCasFinder.pl --in {input[0]} --out {output}
+        mkdir -p results/ccfinder
+        cd results/ccfinder
+        while read file
+        do
+            filename=$(basename $file .fna)
+            perl ../../bin/ccfinder/CRISPRCasFinder.pl --so ../../bin/ccfinder/sel392v2.so --in ../../$file
+        done < ../../{input.a}
+        cd ../..
         '''
 
 rule cidentify:
     input:
-        expand("upload/{seq}.fna", seq=SEQS),
-        "directory(results/cidentify)",
+        a="input_list.txt",
+        b="results",
     output:
-        expand("directory(results/cidentify/{seq}/)", seq=SEQS)
-    threads: 1
+        directory(expand("results/cidentify/{seq}/", seq=SEQS))
+    threads: 2
     conda:
         "crispr_identify_env"
     shell:'''
-        mkdir {output}
-        python bin/cidentify/CRISPRidentify.py --file {input} --result_folder {output}
-        '''
+        mkdir -p {output}
+    '''
+    # python bin/cidentify/CRISPRidentify.py --cpu {threads} --input_folder upload --result_folder {output}
 
 rule cdetect:
     input:
-        expand("upload/{seq}.fna", seq=SEQS),
-        "directory(results/cidentify)",
+        a="input_list.txt",
+        b="results",
     output:
         expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
-    threads: 1
+    threads: 2
     conda:
         "padloc"
     shell:'''
-        run-crisprdetect --input {input[0]} --output {output[0]}
+        while read file
+        do
+            filename=$(basename $file .fna)
+            run-crisprdetect --input $file --output results/cdetect/$filename.1_crispr
+        done < {input.a}
         '''
+        # run-crisprdetect --input $file --output results/cdetect/$filename.1_crispr
 
 rule padloc:
     input:
-        expand("upload/{seq}.fna", seq=SEQS),
-        "directory(results/padloc)",
-        expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
+        a="input_list.txt",
+        b="results",
+        c=expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
     output:
-        expand("directory(results/padloc/{seq}/)", seq=SEQS)
-    threads: 8
+        directory(expand("results/padloc/{seq}/", seq=SEQS))
+    threads: 2
     conda:
         "padloc"
     shell:'''
-        padloc --fna {input[0]} --crispr {input[1]} --outdir {output} --cpu {threads}
+        while read file
+        do
+            filename=$(basename $file .fna)
+            mkdir -p results/padloc/$filename
+            padloc --fna $file --crispr results/cdetect/$filename.1_crispr.gff --outdir results/padloc/$filename --cpu {threads}
+        done < {input.a}
         '''
 
 rule collate_cct:
     input:
-        expand("directory(results/cctyper/{seq}/)", seq=SEQS)
+        expand("results/cctyper/{seq}/", seq=SEQS)
     output:
         "results/cctyper.tsv"
-    shell:"./comparison/scripts/cctypercollate.sh {input} {output}"
+    shell: "comparison/scripts/collatecct.sh results/cctyper/ {output}"
 
 rule collateccf:
     input:
-        expand("directory(results/ccfinder/{seq}/)", seq=SEQS)
+        "results/ccfinder/"
     output:
         "results/ccfinder.tsv"
     threads: 1
-    shell: "./comparison/scripts/collateccf.sh {input} {output}"
+    shell: "comparison/scripts/collateccf.sh results/ccfinder/ {output}"
 
-rule collateci:
+rule collatecidentify:
     input:
-        expand("directory(results/cidentify/{seq}/)", seq=SEQS)
+        expand("results/cidentify/{seq}/", seq=SEQS)
     output:
         "results/cidentify.tsv"
-    threads: 1
-    shell: "./comparison/scripts/collateci.sh {input} {output}"
+    shell: "comparison/scripts/collateci.sh results/cidentify/ {output}"
 
 rule collatepadloc:
     input:
-        expand("directory(results/padloc/{seq}/)", seq=SEQS)
+        expand("results/padloc/{seq}/", seq=SEQS)
     output:
         "results/padloc.tsv"
-    shell: "./comparison/scripts/collatepadloc.sh {input} {output}"
+    shell: "comparison/scripts/collatepadloc.sh results/padloc/ {output}"
 
 rule create_tarball:
     input:
         "results/cctyper.tsv",
+        expand("results/cctyper/{seq}/", seq=SEQS),
         "results/ccfinder.tsv",
+        "results/ccfinder/",
         "results/cidentify.tsv",
-        "results/padloc.tsv",
-        expand("directory(results/cctyper/{seq}/)", seq=SEQS),
-        expand("directory(results/ccfinder/{seq}/)", seq=SEQS),
-        expand("directory(results/cidentify/{seq}/)", seq=SEQS),
+        expand("results/cidentify/{seq}/", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
-        expand("directory(results/padloc/{seq}/)", seq=SEQS),
+        "results/padloc.tsv",
+        expand("results/padloc/{seq}/", seq=SEQS),
     output:
         "results.tar.gz"
-    shell:"tar -xzvf {output} {input}"
-    
+    shell:"tar -czvf {output} {input}"

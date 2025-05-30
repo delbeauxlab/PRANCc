@@ -2,11 +2,11 @@
 
 # Directory containing text files
 # input_dir="../../results/cctresults"
-input_dir=${1:-"../../results/cctresults"}
+input_dir=${1:-"../../results/cctyper"}
 
 # Output TSV file
 # output_file="../../results/cctresults.tsv"
-output_file=${2:-"../../results/cctresults.tsv"}
+output_file=${2:-"../../results/cctyper.tsv"}
 
 # Clear the output file if it already exists
 > "$output_file"
@@ -21,7 +21,7 @@ total_sequences=0
 total_crisprs=0
 
 # Loop over all folders in directory
-for folder in $input_dir/cctyperresults/*/
+for folder in $input_dir/*/
 do
     foldername=$(basename $folder)
     file="$folder/cas_operons.tab"
