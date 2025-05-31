@@ -1,5 +1,12 @@
 import os
 
+#tell us how you did#
+onsuccess:
+    print("Workflow finished, no error")
+
+onerror:
+    print("An error occurred")
+
 #pulls names from seqs in upload folder, assigns list as a variable#
 SEQS = glob_wildcards("upload/{seq}.fna").seq
 
@@ -152,6 +159,12 @@ rule collatepadloc:
     output:
         "results/padloc.tsv"
     shell: "comparison/scripts/collatepadloc.sh results/padloc/ {output}"
+
+#gets the versions of each program run#
+rule get_versions:
+    output:
+        log = "versions.tsv"
+    shell:
 
 #compile into tarball#
 rule create_tarball:
