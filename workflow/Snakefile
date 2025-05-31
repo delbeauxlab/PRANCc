@@ -1,11 +1,14 @@
 import os
 
+#pulls names from seqs in upload folder, assigns list as a variable#
 SEQS = glob_wildcards("upload/{seq}.fna").seq
 
+#rules run by default#
 rule all:
     input: 
         "results.tar.gz"
 
+#check there are files in upload folder; that output directories exist#
 rule check_folders:
     input:
         expand("upload/{seq}.fna", seq=SEQS)
@@ -17,6 +20,7 @@ rule check_folders:
         directory("results/padloc"),
     shell: "mkdir -p {output}"
 
+#create list based on seqs in upload directory#
 rule list_inputs:
     input:
         expand("upload/{seq}.fna", seq=SEQS)
@@ -24,6 +28,7 @@ rule list_inputs:
         "input_list.txt"
     shell: "echo {input} | tr ' ' '\n' > {output}"
 
+#run cctypper; generate results#
 rule cctyper:
     input: 
         a="input_list.txt",
@@ -41,6 +46,7 @@ rule cctyper:
         done < {input.a}
         '''
 
+#run ccfinder; generate results#
 rule ccfinder:
     input:
         a="input_list.txt",
@@ -61,6 +67,7 @@ rule ccfinder:
         cd ../..
         '''
 
+#run cidentify; generate results#
 rule cidentify:
     input:
         a="input_list.txt",
@@ -75,6 +82,7 @@ rule cidentify:
     '''
     # python bin/cidentify/CRISPRidentify.py --cpu {threads} --input_folder upload --result_folder {output}
 
+#run cdetect; generate results -->.gff used for padloc to run#
 rule cdetect:
     input:
         a="input_list.txt",
@@ -95,6 +103,7 @@ rule cdetect:
         '''
         # run-crisprdetect --input $file --output results/cdetect/$filename.1_crispr
 
+#run padloc; generate results#
 rule padloc:
     input:
         a="input_list.txt",
@@ -114,6 +123,7 @@ rule padloc:
         done < {input.a}
         '''
 
+#collate results per result step#
 rule collate_cct:
     input:
         expand("results/cctyper/{seq}/", seq=SEQS)
@@ -143,6 +153,7 @@ rule collatepadloc:
         "results/padloc.tsv"
     shell: "comparison/scripts/collatepadloc.sh results/padloc/ {output}"
 
+#compile into tarball#
 rule create_tarball:
     input:
         "results/cctyper.tsv",
