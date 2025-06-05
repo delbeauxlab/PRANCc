@@ -1,6 +1,6 @@
 # PRANCc
 : a Pipeline Researching AMR, Neisseria spp., and CRISPR correlations
-v0.2.0-alpha
+v0.2.1-alpha
 
 Copyright (C) 2023  Tyler Hall, Samantha J. Webster
 
@@ -29,7 +29,8 @@ To install, install the prerequisites, or ask your system admin to. comparison/i
 * Conda
 * Mamba (I recommend installing Miniforge which includes both Conda and Mamba. You can find it at https://github.com/conda-forge/miniforge)
 * Snakemake
-* build-essentials (or your Linux flavour of `make`, if not installed by default)
+* build-essential (or your Linux flavour of `make`, if not installed by default)
+* unzip
  
 ### Setup
 
@@ -40,7 +41,7 @@ To install, install the prerequisites, or ask your system admin to. comparison/i
 
 ## Run
 
-1. Upload a tarball containing *just* the .fna files you want to analyse to prancc folder.
+1. Add all the .fna files you want to analyse to the prancc/upload folder
 1. Activate the snakemake environment (if you used my install script, `conda activate snakemake`)
 1. Navigate to where the PRANCc folder was extracted
 1. `snakemake`
@@ -57,10 +58,11 @@ Produces a tarball results.tar.gz in the prancc folder containing:
     * CrisprDetect
     * PADLOC
 * .tsv sheets of the summarised output of:
-    * CrisprCasFinder
+    * CrisprCasFinder (crispr and cas)
     * CrisprCasTyper
     * CRISPRIdentify
     * PADLOC
+    * version logs of all environments and conda
 
 ## Contact us
 If you have any questions, please feel free to contact us! You can reach me at avcloudy@gmail.com, or both of us at delbeauxlab@gmail.com. This is very much a work in progress!

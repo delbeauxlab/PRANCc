@@ -2,7 +2,7 @@
 
 # Directory containing text files
 # input_dir="../../results/padlocresults"
-input_dir=${1"results/padlocresults"}
+input_dir=${1:-"results/padloc/"}
 
 # Output TSV file
 # output_file="../../results/padlocresults.tsv"
@@ -29,7 +29,7 @@ echo -e $header >> $output_file
 # rm -r $input_dir
 # mv $input_dir.bak $input_dir
 
-for file in $input_dir/*.csv
+for file in $input_dir*/*.csv
 do
     filename=$(basename $file '.csv')
     sed -e '1d' -e 's/,/\t/g' $file | while IFS= read line

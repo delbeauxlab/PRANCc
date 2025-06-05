@@ -1,5 +1,3 @@
-import os
-
 #tell us how you did#
 onsuccess:
     print("Workflow finished, no error")
@@ -15,7 +13,7 @@ rule all:
     input: 
         "results.tar.gz"
 
-#check there are files in upload folder; that output directories exist#
+#check there are files in upload folder that output directories exist#
 rule check_folders:
     input:
         expand("upload/{seq}.fna", seq=SEQS)
@@ -35,14 +33,15 @@ rule list_inputs:
         "input_list.txt"
     shell: "echo {input} | tr ' ' '\n' > {output}"
 
-#run cctypper; generate results#
+#run cctypper generate results#
 rule cctyper:
     input: 
         a="input_list.txt",
         b="results",
     output:
-        directory(expand("results/cctyper/{seq}/", seq=SEQS))
-    threads: 2
+        directory(expand("results/cctyper/{seq}/", seq=SEQS)),
+        log = "results/cctyperversion.log",
+    threads: 8
     conda:
         "envs/cctyper.yaml"
     shell:'''
@@ -51,9 +50,11 @@ rule cctyper:
             filename=$(basename $file .fna)
             cctyper --threads {threads} $file results/cctyper/$filename
         done < {input.a}
+
+        conda list > {output.log}
         '''
 
-#run ccfinder; generate results#
+#run ccfinder generate results#
 rule ccfinder:
     input:
         a="input_list.txt",
@@ -74,22 +75,21 @@ rule ccfinder:
         cd ../..
         '''
 
-#run cidentify; generate results#
+#run cidentify generate results#
 rule cidentify:
     input:
         a="input_list.txt",
         b="results",
     output:
         directory(expand("results/cidentify/{seq}/", seq=SEQS))
-    threads: 2
+    threads: 8
     conda:
         "crispr_identify_env"
     shell:'''
         mkdir -p {output}
-    '''
-    # python bin/cidentify/CRISPRidentify.py --cpu {threads} --input_folder upload --result_folder {output}
+        '''
 
-#run cdetect; generate results -->.gff used for padloc to run#
+#run cdetect generate results -->.gff used for padloc to run#
 rule cdetect:
     input:
         a="input_list.txt",
@@ -98,7 +98,7 @@ rule cdetect:
         expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
-    threads: 2
+    threads: 8
     conda:
         "padloc"
     shell:'''
@@ -108,9 +108,8 @@ rule cdetect:
             run-crisprdetect --input $file --output results/cdetect/$filename.1_crispr
         done < {input.a}
         '''
-        # run-crisprdetect --input $file --output results/cdetect/$filename.1_crispr
 
-#run padloc; generate results#
+#run padloc generate results#
 rule padloc:
     input:
         a="input_list.txt",
@@ -118,7 +117,7 @@ rule padloc:
         c=expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
     output:
         directory(expand("results/padloc/{seq}/", seq=SEQS))
-    threads: 2
+    threads: 8
     conda:
         "padloc"
     shell:'''
@@ -136,42 +135,57 @@ rule collate_cct:
         expand("results/cctyper/{seq}/", seq=SEQS)
     output:
         "results/cctyper.tsv"
-    shell: "comparison/scripts/collatecct.sh results/cctyper/ {output}"
+    threads: 1
+    shell: "./comparison/scripts/collatecct.sh results/cctyper/ {output}"
 
 rule collateccf:
     input:
         "results/ccfinder/"
     output:
-        "results/ccfinder.tsv"
+        "results/ccfcas.tsv",
+        "results/ccfcrispr.tsv",
     threads: 1
-    shell: "comparison/scripts/collateccf.sh results/ccfinder/ {output}"
+    shell: "./comparison/scripts/collateccf.sh results/ccfinder/ {output}"
 
 rule collatecidentify:
     input:
         expand("results/cidentify/{seq}/", seq=SEQS)
     output:
         "results/cidentify.tsv"
-    shell: "comparison/scripts/collateci.sh results/cidentify/ {output}"
+    threads: 1
+    shell: "./comparison/scripts/collateci.sh results/cidentify/ {output}"
 
 rule collatepadloc:
     input:
         expand("results/padloc/{seq}/", seq=SEQS)
     output:
         "results/padloc.tsv"
-    shell: "comparison/scripts/collatepadloc.sh results/padloc/ {output}"
+    threads: 1
+    shell: "./comparison/scripts/collatepadloc.sh results/padloc/ {output}"
 
 #gets the versions of each program run#
 rule get_versions:
+    input:
+        "results/cctyperversion.log"
     output:
-        log = "versions.tsv"
-    shell:
+        log = "results/version.log"
+    shell:'''
+        conda --version >> {output}
+        conda list -n padloc >> {output}
+        conda list -n crisprcasfinder >> {output}
+        conda list -n crispr_identify_env >> {output}
+        conda list -n crisprdetect >> {output}
+        conda list -n snakemake >> {output}
+        cat {input} >> {output}
+    '''
 
 #compile into tarball#
 rule create_tarball:
     input:
         "results/cctyper.tsv",
         expand("results/cctyper/{seq}/", seq=SEQS),
-        "results/ccfinder.tsv",
+        "results/ccfcas.tsv",
+        "results/ccfcrispr.tsv",
         "results/ccfinder/",
         "results/cidentify.tsv",
         expand("results/cidentify/{seq}/", seq=SEQS),
@@ -180,6 +194,7 @@ rule create_tarball:
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
         "results/padloc.tsv",
         expand("results/padloc/{seq}/", seq=SEQS),
+        "results/version.log",
     output:
         "results.tar.gz"
     shell:"tar -czvf {output} {input}"

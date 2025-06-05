@@ -2,11 +2,11 @@
 
 # Directory containing text files
 # input_dir="../../results/crispridentifyresults"
-input_dir=${1:-"../../results/crispridentifyresults"}
+input_dir=${1:-"results/cidentify"}
 
 # Output TSV file
 # output_file="../../results/ciresults.tsv"
-output_file=${2:-"../../results/ciresults.tsv"}
+output_file=${2:-"results/cidentify.tsv"}
 
 # Clear the output file if it already exists
 > "$output_file"

@@ -1,9 +1,0 @@
-name: cctyper
-channels:
-  - bioconda
-  - conda-forge
-  - defaults
-dependencies:
-  - mamba=1.4.*
-  - python=3.11.*
-  - ncbi-amrfinder=3.11.*
