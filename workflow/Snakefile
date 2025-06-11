@@ -72,7 +72,7 @@ rule ccfinder:
         mkdir -p results/ccfinder
         while read file
         do
-            filename=$(basename) $file .fna)
+            filename=$(basename $file .fna)
             perl bin/ccfinder/CRISPRCasFinder.pl \
             -so bin/ccfinder/sel392v2.so \
             -in $file \
