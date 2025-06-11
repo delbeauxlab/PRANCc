@@ -80,6 +80,7 @@ rule ccfinder:
             -out ../../results/ccfinder/$filename \
             -cas \
             -cpuM {threads}
+            mkdir -p ../../results/ccfinder/$filename
         done < ../../{input.a}
         cd ../..
         '''
