@@ -77,7 +77,7 @@ rule ccfinder:
             perl ../../bin/ccfinder/CRISPRCasFinder.pl \
             -so ../../bin/ccfinder/sel392v2.so \
             -in ../../$file \
-            -out ../../results/$filename/ \
+            -out ../../results/ccfinder/$filename \
             -cas \
             -cpuM {threads}
         done < ../../{input.a}
