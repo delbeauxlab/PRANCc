@@ -42,7 +42,7 @@ rule cctyper:
         directory(expand("results/cctyper/{seq}/", seq=SEQS)),
         log = "results/cctyperversion.log",
     benchmark:
-        expand("results/benchmark/cct_{seq}.txt", seq=SEQS)
+        "results/benchmark/cct.txt"
     threads: 1
     conda:
         "envs/cctyper.yaml"
