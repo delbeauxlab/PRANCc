@@ -26,11 +26,12 @@ channels:
   - anaconda
   - conda-forge
   - bioconda
-  - defaults
+  # - defaults
   - biobuilds
-  - bioconda/label/cf201901
+  # - bioconda/label/cf201901
   - r
 dependencies:
+  - python=3.9
   - anaconda::_tflow_select=2.3.0
   - biopython=1.76
   - h5py=2.10.0
@@ -44,11 +45,13 @@ dependencies:
   - perl-threaded=5.26.0
   - perl-yaml=1.29
   - prodigal=2.6.3
-  - regex
-  - joblib
-  - networkx
-  - sklearn
-  - scipy
-  - dill
-  - requests
-  - multiprocessing
+  - pip
+  - pip:
+    - regex
+    - joblib
+    - networkx
+    - sklearn
+    - scipy
+    - dill
+    - requests
+    - multiprocessing
