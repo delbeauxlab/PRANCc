@@ -97,7 +97,7 @@ rule cidentify:
     conda:
         "crispr_identify_env"
     shell:'''
-        python CRISPRidentify.py --input_folder upload --result_folder results/crispridentify
+        python bin/cidentify/CRISPRidentify.py --input_folder upload --result_folder results/crispridentify
         '''
                 # mkdir -p {output}
 
