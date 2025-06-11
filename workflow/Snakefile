@@ -1,89 +1,200 @@
-id, = glob_wildcards("resources/ng/bin/{isolate}.fasta")
-#id, = glob_wildcards("results/ng/cctyperresults/{isolate}.fasta/")
-metadataregions, = glob_wildcards("resources/ng/metadata{region}.csv")
+#tell us how you did#
+onsuccess:
+    print("Workflow finished, no error")
 
+onerror:
+    print("An error occurred")
+
+#pulls names from seqs in upload folder, assigns list as a variable#
+SEQS = glob_wildcards("upload/{seq}.fna").seq
+
+#rules run by default#
 rule all:
-    input:
-        #expand("results/ng/cctyperresults/{isolate}/", isolate=id),
-        expand("results/ng/cctyperresults/{isolate}/cas_operons.tab", isolate=id, allow_missing=True),
-        "results/ng/collected_cas_operons.csv",
-        expand("results/ng/amrfinderresults/{isolate}.csv", isolate=id),
-        "results/ng/collected_amr_genes.csv",
-        "resources/ng/collected_metadata.csv",
-        "resources/ng/collected_ngstar.csv",
-        "results/ng/collected_all.csv"
+    input: 
+        "results.tar.gz"
 
+#check there are files in upload folder that output directories exist#
+rule check_folders:
+    input:
+        expand("upload/{seq}.fna", seq=SEQS)
+    output:
+        directory("results"),
+        directory("results/cctyper"),
+        directory("results/cidentify"),
+        # directory("results/cdetect"),
+        directory("results/padloc"),
+    shell: "mkdir -p {output}"
+
+#create list based on seqs in upload directory#
+rule list_inputs:
+    input:
+        expand("upload/{seq}.fna", seq=SEQS)
+    output:
+        "input_list.txt"
+    shell: "echo {input} | tr ' ' '\n' > {output}"
+
+#run cctypper generate results#
 rule cctyper:
-    input:
-        expand("resources/ng/bin/{isolate}.fasta", isolate=id)
+    input: 
+        a="input_list.txt",
+        b="results",
     output:
-        #directory(expand("results/ng/cctyperresults/{isolate}/", isolate=id))
-        expand("results/ng/cctyperresults/{isolate}.fasta/cas_operons.tab", isolate=id, allow_missing=True)
-    threads: 4
+        directory(expand("results/cctyper/{seq}/", seq=SEQS)),
+        log = "results/cctyperversion.log",
+    threads: 1
     conda:
-        "cctyper"
-        #"envs/cctyper.yaml"
-    shell:
-        """
-        cctyper {input} {output} --threads 4
-        """
-rule collect_cas:
-    input:
-        expand("results/ng/cctyperresults/{isolate}.fasta/cas_operons.tab", isolate=id, allow_missing=True)
-    output:
-        "results/ng/collected_cas_operons.csv"
-    conda:
-        "pandas"
-        #"envs/pandas.yaml"
-    script:
-        "workflow/scripts/collect_cctyper_output.py"
+        "envs/cctyper.yaml"
+    shell:'''
+        while read file
+        do
+            filename=$(basename $file .fna)
+            cctyper --threads {threads} $file results/cctyper/$filename
+        done < {input.a}
 
-rule amrfinderplusplus:
-    input:
-        expand("resources/ng/bin/{isolate}.fasta", isolate=id)
-    output:
-        expand("results/ng/amrfinderresults/{isolate}.csv", isolate=id)
-    # find out how many threads
-    conda:
-        "amrfinder"
-        #"envs/amrfinder.yaml"
-    shell:
-        "amrfinder -n {input} --organism Neisseria_gonorrhoeae -o {output}"
+        conda list > {output.log}
+        '''
 
-rule collect_amr:
+#run ccfinder generate results#
+rule ccfinder:
     input:
-        expand("results/ng/amrfinderresults/{isolate}.csv", isolate=id)
+        a="input_list.txt",
+        b="results",
     output:
-        "results/ng/collected_amr_genes.csv"
+        directory(expand("results/ccfinder/{seq}/", seq=SEQS))
+    threads: 1
     conda:
-        "pandas"
-        #envs/pandas.yaml"
-    script:
-        "workflow/scripts/collect_amrfinder_output.py"
+        "crisprcasfinder"
+    shell:'''
+        mkdir -p results/ccfinder
+        cd results/ccfinder
+        while read file
+        do
+            filename=$(basename $file .fna)
+            perl ../../bin/ccfinder/CRISPRCasFinder.pl -so ../../bin/ccfinder/sel392v2.so -in ../../$file -out $filename/ -cas -cpuM {threads}
+        done < ../../{input.a}
+        cd ../..
+        '''
 
-rule collect_metadata:
+#run cidentify generate results#
+rule cidentify:
     input:
-        expand("resources/ng/metadata{region}.csv", region=metadataregions),
-        expand("resources/ng/ngstar{region}.csv", region=metadataregions)
+        a="input_list.txt",
+        b="results",
     output:
-        "resources/ng/collected_metadata.csv",
-        "resources/ng/collected_ngstar.csv"
+        directory(expand("results/cidentify/{seq}/", seq=SEQS))
+    threads: 1
     conda:
-        "pandas"
-        #"envs/pandas.yaml"
-    script:
-        "workflow/scripts/collate_metadata.py"
+        "crispr_identify_env"
+    shell:'''
+        mkdir -p {output}
+        '''
 
-rule collect_all:
+#run cdetect generate results -->.gff used for padloc to run#
+rule cdetect:
     input:
-        "results/ng/collected_cas_operons.csv",
-        "results/ng/collected_amr_genes.csv",
-        "resources/ng/collected_metadata.csv",
-        "resources/ng/collected_ngstar.csv"
+        a="input_list.txt",
+        b="results",
     output:
-        "results/ng/collected_all.csv"
+        expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
+        expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
+        expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
+    threads: 1
     conda:
-        "pandas"
-        #"envs/pandas.yaml"
-    script:
-        "collateall.py"
+        "padloc"
+    shell:'''
+        while read file
+        do
+            filename=$(basename $file .fna)
+            run-crisprdetect --input $file --output results/cdetect/$filename.1_crispr
+        done < {input.a}
+        '''
+
+#run padloc generate results#
+rule padloc:
+    input:
+        a="input_list.txt",
+        b="results",
+        c=expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
+    output:
+        directory(expand("results/padloc/{seq}/", seq=SEQS))
+    threads: 1
+    conda:
+        "padloc"
+    shell:'''
+        while read file
+        do
+            filename=$(basename $file .fna)
+            mkdir -p results/padloc/$filename
+            padloc --fna $file --crispr results/cdetect/$filename.1_crispr.gff --outdir results/padloc/$filename --cpu {threads}
+        done < {input.a}
+        '''
+
+#collate results per result step#
+rule collate_cct:
+    input:
+        expand("results/cctyper/{seq}/", seq=SEQS)
+    output:
+        "results/cctyper.tsv"
+    threads: 1
+    shell: "./comparison/scripts/collatecct.sh results/cctyper/ {output}"
+
+rule collateccf:
+    input:
+        expand("results/ccfinder/{seq}/", seq=SEQS)
+    output:
+        "results/ccfcas.tsv",
+        "results/ccfcrispr.tsv",
+    threads: 1
+    shell: "./comparison/scripts/collateccf.sh results/ccfinder/ {output}"
+
+rule collatecidentify:
+    input:
+        expand("results/cidentify/{seq}/", seq=SEQS)
+    output:
+        "results/cidentify.tsv"
+    threads: 1
+    shell: "./comparison/scripts/collateci.sh results/cidentify/ {output}"
+
+rule collatepadloc:
+    input:
+        expand("results/padloc/{seq}/", seq=SEQS)
+    output:
+        "results/padloc.tsv"
+    threads: 1
+    shell: "./comparison/scripts/collatepadloc.sh results/padloc/ {output}"
+
+#gets the versions of each program run#
+rule get_versions:
+    input:
+        "results/cctyperversion.log"
+    output:
+        log = "results/version.log"
+    shell:'''
+        conda --version >> {output}
+        conda list -n padloc >> {output}
+        conda list -n crisprcasfinder >> {output}
+        conda list -n crispr_identify_env >> {output}
+        conda list -n crisprdetect >> {output}
+        conda list -n snakemake >> {output}
+        cat {input} >> {output}
+    '''
+
+#compile into tarball#
+rule create_tarball:
+    input:
+        "results/cctyper.tsv",
+        expand("results/cctyper/{seq}/", seq=SEQS),
+        "results/ccfcas.tsv",
+        "results/ccfcrispr.tsv",
+        expand("results/ccfinder/{seq}/", seq=SEQS),
+        "results/cidentify.tsv",
+        expand("results/cidentify/{seq}/", seq=SEQS),
+        expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
+        expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
+        expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
+        "results/padloc.tsv",
+        expand("results/padloc/{seq}/", seq=SEQS),
+        "results/version.log",
+    output:
+        "results.tar.gz"
+    shell:"tar -czvf {output} {input}"

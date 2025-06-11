@@ -4,6 +4,4 @@ channels:
   - conda-forge
   - russel88
 dependencies:
-  - mamba=1.4.*
-  - python=3.11.*
   - cctyper=1.8.*
