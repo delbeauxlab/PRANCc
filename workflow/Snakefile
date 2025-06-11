@@ -205,7 +205,7 @@ rule create_tarball:
         "results/padloc.tsv",
         expand("results/padloc/{seq}/", seq=SEQS),
         "results/version.log",
-        "results/benchmark/ccf.txt"
+        "results/benchmark/ccf.txt",
         "results/benchmark/cct.txt",
         "results/benchmark/ci.txt",
         "results/benchmark/cd.txt",
