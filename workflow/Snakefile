@@ -23,6 +23,7 @@ rule check_folders:
         directory("results/cidentify"),
         directory("results/padloc"),
         directory("results/benchmark"),
+        directory("results/ccfinder"),
     shell: "mkdir -p {output}"
 
 #create list based on seqs in upload directory#
@@ -69,20 +70,17 @@ rule ccfinder:
     conda:
         "crisprcasfinder"
     shell:'''
-        mkdir -p results/ccfinder
-        cd results/ccfinder
         while read file
         do
-            filename=$(basename $file .fna)
-            perl ../../bin/ccfinder/CRISPRCasFinder.pl \
-            -so ../../bin/ccfinder/sel392v2.so \
-            -in ../../$file \
-            -out ../../results/ccfinder/$filename \
+            filename=$(basename) $file .fna)
+            perl bin/ccfinder/CRISPRCasFinder.pl \
+            -so bin/ccfinder/sel392v2.so \
+            -in $file \
+            -out results/ccfinder/$filename/ \
             -cas \
             -cpuM {threads}
-            mkdir -p ../../results/ccfinder/$filename
-        done < ../../{input.a}
-        cd ../..
+        done < {input.a}
+        mkdir -p {output}
         '''
 
 #run cidentify generate results#
