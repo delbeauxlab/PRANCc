@@ -44,3 +44,4 @@ dependencies:
   - perl-threaded=5.26.0
   - perl-yaml=1.29
   - prodigal=2.6.3
+  - regex

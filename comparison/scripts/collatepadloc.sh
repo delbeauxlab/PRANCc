@@ -38,3 +38,5 @@ do
         echo -e "$line" >> $output_file
     done
 done
+
+# might need to strip filename to get correct formatting -> echo -en "${filename%_padloc}\t" >> $output_file

@@ -61,6 +61,8 @@ rule cctyper:
 # ols<81.  
 # Will need to fix at some point
 
+# cctyper seems to be greedy with resources - may need to run threads 8 regardless
+
 #run ccfinder generate results#
 rule ccfinder:
     input:
@@ -148,9 +150,13 @@ rule padloc:
         do
             filename=$(basename $file .fna)
             mkdir -p results/padloc/$filename
-            padloc --fna $file --crispr results/cdetect/$filename.1_crispr.gff --outdir results/padloc/$filename --cpu {threads}
+            padloc --fna $file \
+            --crispr results/cdetect/$filename.1_crispr.gff \
+            --outdir results/padloc/$filename \
+            --cpu {threads}
         done < {input.a}
         '''
+# padloc may have to run with --cpu 8 - it seems to saturate cpu regardless of setting
 
 #collate results per result step#
 rule collate_cct:
