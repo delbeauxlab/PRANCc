@@ -2,7 +2,7 @@
 : a Pipeline Researching AMR, Neisseria spp., and CRISPR correlations
 v0.2.2-beta
 
-Copyright (C) 2023  Tyler Hall, Samantha J. Webster
+Copyright (C) 2023, 2024-2025  Tyler Hall, Samantha J. Webster
 
 PRANCc is a pipeline **in progress** to find and identify *cas* genes and CRISPR-Cas systems using [CRISPRCasTyper](https://github.com/Russel88/CRISPRCasTyper#) and find and identify anti-microbial resistance (AMR) genes using [AMRFinder++](https://github.com/ncbi/amr) from whole genome sequences(WGS). Then, using that information, run statistical analyses to find any relationships or possible genetic origins between the two. 
 
