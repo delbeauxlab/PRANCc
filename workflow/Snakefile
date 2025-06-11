@@ -23,7 +23,6 @@ rule check_folders:
         directory("results/cidentify"),
         directory("results/padloc"),
         directory("results/benchmark"),
-        directory("results/ccfinder"),
     shell: "mkdir -p {output}"
 
 #create list based on seqs in upload directory#
@@ -70,6 +69,7 @@ rule ccfinder:
     conda:
         "crisprcasfinder"
     shell:'''
+        mkdir -p results/ccfinder
         while read file
         do
             filename=$(basename) $file .fna)
