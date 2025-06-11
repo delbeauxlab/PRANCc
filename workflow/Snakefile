@@ -21,8 +21,8 @@ rule check_folders:
         directory("results"),
         directory("results/cctyper"),
         directory("results/cidentify"),
-        # directory("results/cdetect"),
         directory("results/padloc"),
+        directory("results/benchmark"),
     shell: "mkdir -p {output}"
 
 #create list based on seqs in upload directory#
@@ -41,6 +41,8 @@ rule cctyper:
     output:
         directory(expand("results/cctyper/{seq}/", seq=SEQS)),
         log = "results/cctyperversion.log",
+    benchmark:
+        expand("results/benchmark/cct_{seq}.txt", seq=SEQS)
     threads: 1
     conda:
         "envs/cctyper.yaml"
@@ -61,6 +63,8 @@ rule ccfinder:
         b="results",
     output:
         directory(expand("results/ccfinder/{seq}/", seq=SEQS))
+    benchmark:
+        expand("results/benchmark/ccf_{seq}.txt", seq=SEQS)
     threads: 1
     conda:
         "crisprcasfinder"
@@ -82,6 +86,8 @@ rule cidentify:
         b="results",
     output:
         directory(expand("results/cidentify/{seq}/", seq=SEQS))
+    benchmark:
+        expand("results/benchmark/ci_{seq}.txt", seq=SEQS)
     threads: 1
     conda:
         "crispr_identify_env"
@@ -98,6 +104,8 @@ rule cdetect:
         expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
+    benchmark:
+        expand("results/benchmark/cd_{seq}.txt", seq=SEQS)
     threads: 1
     conda:
         "padloc"
@@ -117,6 +125,8 @@ rule padloc:
         c=expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
     output:
         directory(expand("results/padloc/{seq}/", seq=SEQS))
+    benchmark:
+        expand("results/benchmark/padloc_{seq}.txt", seq=SEQS)
     threads: 1
     conda:
         "padloc"
@@ -195,6 +205,11 @@ rule create_tarball:
         "results/padloc.tsv",
         expand("results/padloc/{seq}/", seq=SEQS),
         "results/version.log",
+        expand("results/benchmark/ccf_{seq}.txt", seq=SEQS),
+        expand("results/benchmark/cct_{seq}.txt", seq=SEQS),
+        expand("results/benchmark/ci_{seq}.txt", seq=SEQS),
+        expand("results/benchmark/cd_{seq}.txt", seq=SEQS),
+        expand("results/benchmark/padloc_{seq}.txt", seq=SEQS),
     output:
         "results.tar.gz"
     shell:"tar -czvf {output} {input}"
