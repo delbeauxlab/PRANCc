@@ -64,7 +64,7 @@ rule ccfinder:
     output:
         directory(expand("results/ccfinder/{seq}/", seq=SEQS))
     benchmark:
-        expand("results/benchmark/ccf_{seq}.txt", seq=SEQS)
+        "results/benchmark/ccf.txt"
     threads: 1
     conda:
         "crisprcasfinder"
@@ -87,7 +87,7 @@ rule cidentify:
     output:
         directory(expand("results/cidentify/{seq}/", seq=SEQS))
     benchmark:
-        expand("results/benchmark/ci_{seq}.txt", seq=SEQS)
+        "results/benchmark/ci.txt"
     threads: 1
     conda:
         "crispr_identify_env"
@@ -105,7 +105,7 @@ rule cdetect:
         expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
     benchmark:
-        expand("results/benchmark/cd_{seq}.txt", seq=SEQS)
+        "results/benchmark/cd.txt"
     threads: 1
     conda:
         "padloc"
@@ -126,7 +126,7 @@ rule padloc:
     output:
         directory(expand("results/padloc/{seq}/", seq=SEQS))
     benchmark:
-        expand("results/benchmark/padloc_{seq}.txt", seq=SEQS)
+        "results/benchmark/padloc.txt"
     threads: 1
     conda:
         "padloc"
@@ -205,11 +205,11 @@ rule create_tarball:
         "results/padloc.tsv",
         expand("results/padloc/{seq}/", seq=SEQS),
         "results/version.log",
-        expand("results/benchmark/ccf_{seq}.txt", seq=SEQS),
-        expand("results/benchmark/cct_{seq}.txt", seq=SEQS),
-        expand("results/benchmark/ci_{seq}.txt", seq=SEQS),
-        expand("results/benchmark/cd_{seq}.txt", seq=SEQS),
-        expand("results/benchmark/padloc_{seq}.txt", seq=SEQS),
+        "results/benchmark/ccf.txt"
+        "results/benchmark/cct.txt",
+        "results/benchmark/ci.txt",
+        "results/benchmark/cd.txt",
+        "results/benchmark/padloc.txt",
     output:
         "results.tar.gz"
     shell:"tar -czvf {output} {input}"
