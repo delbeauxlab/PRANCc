@@ -51,6 +51,6 @@ dependencies:
     - joblib
     - networkx
     - scikit-learn
-    - scipy=0.21.3
+    - scipy==0.21.3
     - dill
     - requests
