@@ -76,11 +76,11 @@ rule ccfinder:
             perl bin/ccfinder/CRISPRCasFinder.pl \
             -so bin/ccfinder/sel392v2.so \
             -in $file \
-            -out results/ccfinder/$filename/ \
+            -out $filename \
             -cas \
             -cpuM {threads}
+            mv $filename results/ccfinder/$filename
         done < {input.a}
-        mkdir -p {output}
         '''
 
 #run cidentify generate results#
@@ -96,7 +96,9 @@ rule cidentify:
     conda:
         "crispr_identify_env"
     shell:'''
-        python bin/cidentify/CRISPRidentify.py --input_folder upload --result_folder results/crispridentify
+        python bin/cidentify/CRISPRidentify.py \
+        --input_folder upload \
+        --result_folder results/cidentify
         '''
                 # mkdir -p {output}
 
