@@ -101,7 +101,7 @@ rule cidentify:
         "results/benchmark/ci.txt"
     threads: 1
     conda:
-        "envs/ci.yml"
+        "crispr_identify_env"
     shell:'''
         python bin/cidentify/CRISPRidentify.py \
         --input_folder upload \

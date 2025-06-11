@@ -50,7 +50,7 @@ dependencies:
     - regex
     - joblib
     - networkx
-    - sklearn
+    - scikit-learn
     - scipy
     - dill
     - requests
