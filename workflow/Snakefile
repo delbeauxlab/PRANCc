@@ -55,6 +55,11 @@ rule cctyper:
 
         conda list > {output.log}
         '''
+# UserWarning: pkg_resources is deprecated as an API. See https://setuptools
+# .pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for r
+# emoval as early as 2025-11-30. Refrain from using this package or pin to Setupto
+# ols<81.  
+# Will need to fix at some point
 
 #run ccfinder generate results#
 rule ccfinder:
@@ -94,13 +99,14 @@ rule cidentify:
         "results/benchmark/ci.txt"
     threads: 1
     conda:
-        "crispr_identify_env"
+        "bin/cidentify/environment.yml"
     shell:'''
         python bin/cidentify/CRISPRidentify.py \
         --input_folder upload \
         --result_folder results/cidentify
         '''
                 # mkdir -p {output}
+                # "crispr_identify_env"
 
 #run cdetect generate results -->.gff used for padloc to run#
 rule cdetect:
