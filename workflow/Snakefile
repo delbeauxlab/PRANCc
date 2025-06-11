@@ -109,7 +109,7 @@ rule cidentify:
         while read line
         do
             filename=$(basename $line .fna)
-            mv results/cidentify/${filename%%.*genomic} results/cidentify/$filename
+            mv results/cidentify/${{filename%%.*genomic}} results/cidentify/$filename
         done < {input.a}
         '''
                 # mkdir -p {output}
