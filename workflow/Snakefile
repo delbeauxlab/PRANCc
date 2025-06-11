@@ -74,7 +74,12 @@ rule ccfinder:
         while read file
         do
             filename=$(basename $file .fna)
-            perl ../../bin/ccfinder/CRISPRCasFinder.pl -so ../../bin/ccfinder/sel392v2.so -in ../../$file -out $filename/ -cas -cpuM {threads}
+            perl ../../bin/ccfinder/CRISPRCasFinder.pl \
+            -so ../../bin/ccfinder/sel392v2.so \
+            -in ../../$file \
+            -out ../../results/$filename/ \
+            -cas \
+            -cpuM {threads}
         done < ../../{input.a}
         cd ../..
         '''
@@ -92,8 +97,9 @@ rule cidentify:
     conda:
         "crispr_identify_env"
     shell:'''
-        mkdir -p {output}
+        python CRISPRidentify.py --input_folder upload --result_folder results/crispridentify
         '''
+                # mkdir -p {output}
 
 #run cdetect generate results -->.gff used for padloc to run#
 rule cdetect:
