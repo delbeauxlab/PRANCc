@@ -106,6 +106,11 @@ rule cidentify:
         python bin/cidentify/CRISPRidentify.py \
         --input_folder upload \
         --result_folder results/cidentify
+        while read line
+        do
+            filename=$(basename $line .fna)
+            mv results/cidentify/${filename%%.*genomic} results/cidentify/$filename
+        done < {input.a}
         '''
                 # mkdir -p {output}
                 # "crispr_identify_env"
