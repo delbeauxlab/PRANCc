@@ -41,7 +41,7 @@ rule cctyper:
     output:
         directory(expand("results/cctyper/{seq}/", seq=SEQS)),
         log = "results/cctyperversion.log",
-    threads: 8
+    threads: 1
     conda:
         "envs/cctyper.yaml"
     shell:'''
@@ -60,7 +60,7 @@ rule ccfinder:
         a="input_list.txt",
         b="results",
     output:
-        directory("results/ccfinder/")
+        directory(expand("results/ccfinder/{seq}/", seq=SEQS))
     threads: 1
     conda:
         "crisprcasfinder"
@@ -70,7 +70,7 @@ rule ccfinder:
         while read file
         do
             filename=$(basename $file .fna)
-            perl ../../bin/ccfinder/CRISPRCasFinder.pl --so ../../bin/ccfinder/sel392v2.so --in ../../$file
+            perl ../../bin/ccfinder/CRISPRCasFinder.pl -so ../../bin/ccfinder/sel392v2.so -in ../../$file -out $filename/ -cas -cpuM {threads}
         done < ../../{input.a}
         cd ../..
         '''
@@ -82,7 +82,7 @@ rule cidentify:
         b="results",
     output:
         directory(expand("results/cidentify/{seq}/", seq=SEQS))
-    threads: 8
+    threads: 1
     conda:
         "crispr_identify_env"
     shell:'''
@@ -98,7 +98,7 @@ rule cdetect:
         expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
-    threads: 8
+    threads: 1
     conda:
         "padloc"
     shell:'''
@@ -117,7 +117,7 @@ rule padloc:
         c=expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
     output:
         directory(expand("results/padloc/{seq}/", seq=SEQS))
-    threads: 8
+    threads: 1
     conda:
         "padloc"
     shell:'''
@@ -140,7 +140,7 @@ rule collate_cct:
 
 rule collateccf:
     input:
-        "results/ccfinder/"
+        expand("results/ccfinder/{seq}/", seq=SEQS)
     output:
         "results/ccfcas.tsv",
         "results/ccfcrispr.tsv",
@@ -186,7 +186,7 @@ rule create_tarball:
         expand("results/cctyper/{seq}/", seq=SEQS),
         "results/ccfcas.tsv",
         "results/ccfcrispr.tsv",
-        "results/ccfinder/",
+        expand("results/ccfinder/{seq}/", seq=SEQS),
         "results/cidentify.tsv",
         expand("results/cidentify/{seq}/", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr", seq=SEQS),

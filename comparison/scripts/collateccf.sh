@@ -45,7 +45,7 @@ do
         echo -e $line >> $output_file_cas
         total_cas=$((total_cas + 1))
     done
-    sed 1d $folder/TSV/Crisprs_REPORT.tsv | while read line
+    sed 1d $folder/TSV/Crisprs_REPORT.tsv | while IFS= read line
     do
         echo -en "$foldername\t" >> $output_file_crispr
         echo -e $line >> $output_file_crispr
