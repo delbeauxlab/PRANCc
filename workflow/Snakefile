@@ -99,7 +99,7 @@ rule cidentify:
         "results/benchmark/ci.txt"
     threads: 1
     conda:
-        "bin/cidentify/environment.yml"
+        "envs/ci.yml"
     shell:'''
         python bin/cidentify/CRISPRidentify.py \
         --input_folder upload \
