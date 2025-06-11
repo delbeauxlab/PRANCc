@@ -47,3 +47,8 @@ dependencies:
   - regex
   - joblib
   - networkx
+  - sklearn
+  - scipy
+  - dill
+  - requests
+  - multiprocessing
