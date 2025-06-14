@@ -96,7 +96,13 @@ rule cidentify:
         a="input_list.txt",
         b="results",
     output:
-        directory(expand("results/cidentify/{seq}/", seq=SEQS))
+        directory(expand("results/cidentify/{seq}/", seq=SEQS)),
+        "results/cidentify/Complete_Cas_summary.csv",
+        "results/cidentify/Complete_Cassette_summary.csv",
+        "Complete_array_dataset.fasta",
+        "results/cidentify/Complete_repeat_dataset.fasta",
+        "results/cidentify/Complete_spacer_dataset.fasta",
+        "results/cidentify/Complete_summary.csv",
     benchmark:
         "results/benchmark/ci.txt"
     threads: 1
@@ -183,11 +189,15 @@ rule collateccf:
 
 rule collatecidentify:
     input:
-        expand("results/cidentify/{seq}/", seq=SEQS)
+        expand("results/cidentify/{seq}/", seq=SEQS),
+        a="results/cidentify/Complete_summary.csv",
     output:
         "results/cidentify.tsv"
     threads: 1
-    shell: "./comparison/scripts/collateci.sh results/cidentify/ {output}"
+    shell: '''
+        sed -e 's/,/\t/g' {input.a} >> {output}
+        '''
+    # "./comparison/scripts/collateci.sh results/cidentify/ {output}"
 
 rule collatepadloc:
     input:
@@ -234,6 +244,12 @@ rule create_tarball:
         "results/benchmark/ci.txt",
         "results/benchmark/cd.txt",
         "results/benchmark/padloc.txt",
+        "results/cidentify/Complete_Cas_summary.csv",
+        "results/cidentify/Complete_Cassette_summary.csv",
+        "Complete_array_dataset.fasta",
+        "results/cidentify/Complete_repeat_dataset.fasta",
+        "results/cidentify/Complete_spacer_dataset.fasta",
+        "results/cidentify/Complete_summary.csv",
     output:
         "results.tar.gz"
     shell:"tar -czvf {output} {input}"
