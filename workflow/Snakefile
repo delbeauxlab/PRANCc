@@ -20,10 +20,13 @@ rule check_folders:
     output:
         directory("results"),
         directory("results/cctyper"),
-        directory("results/cidentify"),
+        # directory("results/cidentify"),
         directory("results/padloc"),
         directory("results/benchmark"),
-    shell: "mkdir -p {output}"
+    shell: '''
+        mkdir -p {output}
+        mkdir -p results/cidentify
+        '''
 
 #create list based on seqs in upload directory#
 rule list_inputs:
