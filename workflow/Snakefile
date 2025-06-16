@@ -191,7 +191,8 @@ rule collateccf:
 
 rule collatecidentify:
     input:
-        expand("results/cidentify/{seq}/", seq=SEQS),
+        # expand("results/cidentify/{seq}/", seq=SEQS),
+        "results/cidentify",
         a="results/cidentify/Complete_summary.csv",
     output:
         "results/cidentify.tsv"
