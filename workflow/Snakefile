@@ -111,7 +111,8 @@ rule cidentify:
     shell:'''
         python bin/cidentify/CRISPRidentify.py \
         --input_folder upload \
-        --result_folder results/cidentify
+        --result_folder results/cidentify \
+        --cas True
         while read line
         do
             filename=$(basename $line .fna)
