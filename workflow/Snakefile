@@ -116,11 +116,11 @@ rule cidentify:
         while read line
         do
             filename=$(basename $line .fna)
-            mv results/cidentify/${{filename%%.*genomic}} results/cidentify/$filename
         done < {input.a}
         '''
                 # mkdir -p {output}
                 # "crispr_identify_env"
+                # mv results/cidentify/${{filename%%.*genomic}} results/cidentify/$filename
 
 #run cdetect generate results -->.gff used for padloc to run#
 rule cdetect:
