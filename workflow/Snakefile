@@ -110,7 +110,7 @@ rule cidentify:
         "envs/ci.yml"
     shell:'''
         python bin/cidentify/CRISPRidentify.py \
-        --input_folder upload \
+        --input_folder_multifasta upload \
         --result_folder results/cidentify \
         --cas True
         while read line
