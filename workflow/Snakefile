@@ -45,7 +45,7 @@ rule cctyper:
         log = "results/cctyperversion.log",
     benchmark:
         "results/benchmark/cct.txt"
-    threads: 8
+    threads: 2
     conda:
         "envs/cctyper.yaml"
     shell:'''
@@ -74,7 +74,7 @@ rule ccfinder:
         directory(expand("results/ccfinder/{seq}/", seq=SEQS))
     benchmark:
         "results/benchmark/ccf.txt"
-    threads: 8
+    threads: 2
     conda:
         "crisprcasfinder"
     shell:'''
@@ -109,7 +109,7 @@ rule cidentify:
         map="results/cidentify/sequence_map.txt",
     benchmark:
         "results/benchmark/ci.txt"
-    threads: 8
+    threads: 2
     conda:
         "envs/ci.yml"
     shell:'''
@@ -145,7 +145,7 @@ rule cdetect:
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
     benchmark:
         "results/benchmark/cd.txt"
-    threads: 8
+    threads: 2
     conda:
         "padloc"
     shell:'''
@@ -166,7 +166,7 @@ rule padloc:
         directory(expand("results/padloc/{seq}/", seq=SEQS))
     benchmark:
         "results/benchmark/padloc.txt"
-    threads: 8
+    threads: 2
     conda:
         "padloc"
     shell:'''
