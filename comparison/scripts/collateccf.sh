@@ -35,9 +35,9 @@ total_cas=0
 
 # loop over results summaries in TSV folder per output sequence
 # add on the fna fikes name and collate
+counter=0
 for folder in $input_dir/*/
 do
-    counter=0
     foldername=$(basename $folder)
     while read line
     do
