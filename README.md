@@ -1,6 +1,6 @@
 # PRANCc
 : a Pipeline Researching AMR, Neisseria spp., and CRISPR correlations
-v0.2.2-beta
+v0.2.3-beta
 
 Copyright (C) 2023, 2024-2025  Tyler Hall, Samantha J. Webster
 
@@ -44,7 +44,7 @@ To install, install the prerequisites, or ask your system admin to. comparison/i
 1. Add all the .fna files you want to analyse to the prancc/upload folder
 1. Activate the snakemake environment (if you used my install script, `conda activate snakemake`)
 1. Navigate to where the PRANCc folder was extracted
-1. `snakemake`
+1. `snakemake --cores all --use-conda`
 
 See https://snakemake.readthedocs.io/en/v5.1.4/executable.html for more information about executing snakemake workflows.
 

@@ -63,8 +63,6 @@ rule cctyper:
 # ols<81.  
 # Will need to fix at some point
 
-# cctyper seems to be greedy with resources - may need to run threads 8 regardless
-
 #run ccfinder generate results#
 rule ccfinder:
     input:
@@ -99,7 +97,6 @@ rule cidentify:
         b="results",
     output:
         directory(expand("results/cidentify/{seq}/", seq=SEQS)),
-        # directory("results/cidentify"),
         "results/cidentify/Complete_Cas_summary.csv",
         "results/cidentify/Complete_Cassette_summary.csv",
         "results/cidentify/Complete_array_dataset.fasta",
@@ -130,9 +127,6 @@ rule cidentify:
             done
         done < {input.a}
         '''
-                # mkdir -p {output}
-                # "crispr_identify_env"
-                # mv results/cidentify/${{filename%%.*genomic}} results/cidentify/$filename
 
 #run cdetect generate results -->.gff used for padloc to run#
 rule cdetect:
@@ -180,56 +174,6 @@ rule padloc:
             --cpu {threads}
         done < {input.a}
         '''
-# padloc may have to run with --cpu 8 - it seems to saturate cpu regardless of setting
-
-#collate results per result step#
-rule collate_cct:
-    input:
-        expand("results/cctyper/{seq}/", seq=SEQS)
-    output:
-        "results/cctyper.tsv"
-    threads: 1
-    shell: "./comparison/scripts/collatecct.sh results/cctyper/ {output}"
-
-rule collateccf:
-    input:
-        expand("results/ccfinder/{seq}/", seq=SEQS)
-    output:
-        "results/ccfcas.tsv",
-        "results/ccfcrispr.tsv",
-    threads: 1
-    shell: "./comparison/scripts/collateccf.sh results/ccfinder/ {output}"
-
-rule collatecidentify:
-    input:
-        expand("results/cidentify/{seq}/", seq=SEQS),
-        # "results/cidentify",
-        a="results/cidentify/Complete_summary.csv",
-        map="results/cidentify/sequence_map.txt",
-    output:
-        "results/cidentify.tsv"
-    threads: 1
-    shell: "./comparison/scripts/collateci.sh results/cidentify/ {input.map} {output}"
-        #     counter=0
-        # > {output}
-        # declare -A map
-        # while read line
-        # do
-        #     map[${{line%:*}}]=${{line#*:}}
-        # done < {input.map}
-
-        # while read line
-        # do
-        #     if [ $counter -eq 1 ]
-        #     then
-        #         $filename=$map[${{line%%'\t'*}}]
-        #         echo -en $filename\t >> {output}
-        #     elif [ $counter -eq 0 ]
-        #         echo -en Filename\t >> {output}
-        #         counter=1
-        #     fi
-        #     sed -e 's/,/\t/g' $line >> {output}
-        # done < {input.a}
 
 rule collatepadloc:
     input:
@@ -246,6 +190,8 @@ rule get_versions:
     output:
         log = "results/version.log"
     shell:'''
+        > {output}
+        echo "PRANCc version 0.2.3-beta"
         conda --version >> {output}
         conda list -n padloc >> {output}
         conda list -n crisprcasfinder >> {output}
@@ -265,7 +211,6 @@ rule create_tarball:
         expand("results/ccfinder/{seq}/", seq=SEQS),
         "results/cidentify.tsv",
         expand("results/cidentify/{seq}/", seq=SEQS),
-        # "results/cidentify",
         expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
