@@ -37,20 +37,32 @@ total_cas=0
 # add on the fna fikes name and collate
 for folder in $input_dir/*/
 do
-    total_sequences=$((total_sequences + 1))
+    counter=0
     foldername=$(basename $folder)
-    sed 1d $folder/TSV/CRISPR-Cas_summary.tsv | while read line
+    while read line
     do
-        echo -en "$foldername\t" >> $output_file_cas
+        if [$counter -eq 0]
+        then
+            echo -en "Filename\t" >> $output_file_cas
+            echo -en "Filename\t" >> $output_file_crispr
+            counter=1
+        else
+            echo -en "$foldername\t" >> $output_file_cas
+            echo -en "$foldername\t" >> $output_file_crispr
+        fi
         echo -e $line >> $output_file_cas
-        total_cas=$((total_cas + 1))
-    done
-    sed 1d $folder/TSV/Crisprs_REPORT.tsv | while read line
-    do
-        echo -en "$foldername\t" >> $output_file_crispr
-        echo -e $line >> $output_file_crispr
-        total_spacers=$((total_spacers + 1))
-    done
+    done < $folder/TSV/CRISPR-Cas_summary.tsv
+
+    # sed 1d $folder/TSV/CRISPR-Cas_summary.tsv | while read line
+    # do
+    #     echo -en "$foldername\t" >> $output_file_cas
+    #     echo -e $line >> $output_file_cas
+    # done
+    # sed 1d $folder/TSV/Crisprs_REPORT.tsv | while read line
+    # do
+    #     echo -en "$foldername\t" >> $output_file_crispr
+    #     echo -e $line >> $output_file_crispr
+    # done
 done
 
 # grab absolute path from relative paths specified above
