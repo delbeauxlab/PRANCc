@@ -48,10 +48,15 @@ do
             counter=1
         else
             echo -en "$foldername\t" >> $output_file_cas
-            echo -en "$foldername\t" >> $output_file_crispr
         fi
         echo -e $line >> $output_file_cas
     done < $folder/TSV/CRISPR-Cas_summary.tsv
+
+    while read line
+    do
+        echo -en "$foldername\t" >> $output_file_crispr
+        echo -e $line >> $output_file_crispr
+    done < $folder/TSV/Crisprs_REPORT.tsv
 
     # sed 1d $folder/TSV/CRISPR-Cas_summary.tsv | while read line
     # do
