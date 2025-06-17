@@ -24,8 +24,6 @@ do
     map["${line%:*}"]="${line#*:}"
 done < $input_map
 
-echo $map
-
 while read line
     do
         if [ $counter -eq 0 ]
