@@ -29,7 +29,7 @@ counter=0
                 echo -en Filename\t >> $output_file
                 counter=1
             else
-                $filename=$map[${line%%'\t'*}]
+                $filename=$map[${line%%,*}]
                 echo -en $filename\t >> $output_file
             fi
             sed -e 's/,/\t/g' "$line" >> $output_file
