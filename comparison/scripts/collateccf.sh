@@ -64,7 +64,3 @@ do
     #     echo -e $line >> $output_file_crispr
     # done
 done
-
-# grab absolute path from relative paths specified above
-real_output_path=$(realpath $output_file_crispr)
-echo "Parsing and compilation complete! $total_spacers spacers and $total_cas cas systems found over $total_sequences sequences. Results saved to $real_output_path."
