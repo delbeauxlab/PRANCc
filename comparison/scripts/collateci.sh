@@ -33,7 +33,7 @@ counter=0
                 echo -en $filename\t >> {output}
             fi
             sed -e 's/,/\t/g' "$line" >> {output}
-        done < $input_dir
+        done < $input_dir/Complete_summary.tsv
 
 # header="Sequence\tName\tGlobal ID\tID\tRegion index\tStart\tEnd\t"
 # header+="Length\tConsensus repeat\tRepeat Length\tAverage Spacer Length\t"
