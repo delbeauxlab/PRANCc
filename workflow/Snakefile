@@ -106,7 +106,7 @@ rule cidentify:
         "results/cidentify/Complete_repeat_dataset.fasta",
         "results/cidentify/Complete_spacer_dataset.fasta",
         "results/cidentify/Complete_summary.csv",
-        map="results/cidentify/sequence_map.txt,
+        map="results/cidentify/sequence_map.txt",
     benchmark:
         "results/benchmark/ci.txt"
     threads: 8
@@ -209,29 +209,27 @@ rule collatecidentify:
     output:
         "results/cidentify.tsv"
     threads: 1
-    shell: '''
-        counter=0
-        > {output}
-        declare -A map
-        while read line
-        do
-            map[${{line%:*}}]=${{line#*:}}
-        done < {input.map}
+    shell: "./comparison/scripts/collateci.sh results/cidentify/ {input.map} {output}"
+        #     counter=0
+        # > {output}
+        # declare -A map
+        # while read line
+        # do
+        #     map[${{line%:*}}]=${{line#*:}}
+        # done < {input.map}
 
-        while read line
-        do
-            if [$counter -eq 1]
-            then
-                $filename=$map[${{line%%'\t'*}}]
-                echo -en $filename\t >> {output}
-            elif [$counter -eq 0]
-                echo -en Filename\t >> {output}
-                counter=1
-            fi
-            sed -e 's/,/\t/g' $line >> {output}
-        done < {input.a}
-        '''
-    # "./comparison/scripts/collateci.sh results/cidentify/ {output}"
+        # while read line
+        # do
+        #     if [ $counter -eq 1 ]
+        #     then
+        #         $filename=$map[${{line%%'\t'*}}]
+        #         echo -en $filename\t >> {output}
+        #     elif [ $counter -eq 0 ]
+        #         echo -en Filename\t >> {output}
+        #         counter=1
+        #     fi
+        #     sed -e 's/,/\t/g' $line >> {output}
+        # done < {input.a}
 
 rule collatepadloc:
     input:
