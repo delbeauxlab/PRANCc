@@ -20,12 +20,11 @@ rule check_folders:
     output:
         directory("results"),
         directory("results/cctyper"),
-        # directory("results/cidentify"),
+        directory("results/cidentify"),
         directory("results/padloc"),
         directory("results/benchmark"),
     shell: '''
         mkdir -p {output}
-        mkdir -p results/cidentify
         '''
 
 #create list based on seqs in upload directory#
@@ -99,14 +98,15 @@ rule cidentify:
         a="input_list.txt",
         b="results",
     output:
-        # directory(expand("results/cidentify/{seq}/", seq=SEQS)),
-        directory("results/cidentify"),
+        directory(expand("results/cidentify/{seq}/", seq=SEQS)),
+        # directory("results/cidentify"),
         "results/cidentify/Complete_Cas_summary.csv",
         "results/cidentify/Complete_Cassette_summary.csv",
         "results/cidentify/Complete_array_dataset.fasta",
         "results/cidentify/Complete_repeat_dataset.fasta",
         "results/cidentify/Complete_spacer_dataset.fasta",
         "results/cidentify/Complete_summary.csv",
+        map="results/cidentify/sequence_map.txt,
     benchmark:
         "results/benchmark/ci.txt"
     threads: 8
@@ -117,9 +117,17 @@ rule cidentify:
         --input_folder_multifasta upload \
         --result_folder results/cidentify \
         --cas True
+        > {output.map}
         while read line
         do
             filename=$(basename $line .fna)
+            sequences=$(grep '^>' $line | sed -e 's/>//g' -e 's/[ ,,]/_/g')
+            mkdir -p results/cidentify/$filename
+            for sequence in $sequences
+            do
+                mv results/cidentify/$sequence results/cidentify/$filename/$sequence
+                echo [$sequence]:$filename >> {output.map}
+            done
         done < {input.a}
         '''
                 # mkdir -p {output}
@@ -194,14 +202,34 @@ rule collateccf:
 
 rule collatecidentify:
     input:
-        # expand("results/cidentify/{seq}/", seq=SEQS),
-        "results/cidentify",
+        expand("results/cidentify/{seq}/", seq=SEQS),
+        # "results/cidentify",
         a="results/cidentify/Complete_summary.csv",
+        map="results/cidentify/sequence_map.txt",
     output:
         "results/cidentify.tsv"
     threads: 1
     shell: '''
-        sed -e 's/,/\t/g' {input.a} >> {output}
+        counter=0
+        > {output}
+        declare -A map
+        while read line
+        do
+            map[${{line%:*}}]=${{line#*:}}
+        done < {input.map}
+
+        while read line
+        do
+            if [$counter -eq 1]
+            then
+                $filename=$map[${{line%%'\t'*}}]
+                echo -en $filename\t >> {output}
+            elif [$counter -eq 0]
+                echo -en Filename\t >> {output}
+                counter=1
+            fi
+            sed -e 's/,/\t/g' $line >> {output}
+        done < {input.a}
         '''
     # "./comparison/scripts/collateci.sh results/cidentify/ {output}"
 
@@ -238,8 +266,8 @@ rule create_tarball:
         "results/ccfcrispr.tsv",
         expand("results/ccfinder/{seq}/", seq=SEQS),
         "results/cidentify.tsv",
-        # expand("results/cidentify/{seq}/", seq=SEQS),
-        "results/cidentify",
+        expand("results/cidentify/{seq}/", seq=SEQS),
+        # "results/cidentify",
         expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
         expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
