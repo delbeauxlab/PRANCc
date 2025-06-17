@@ -32,7 +32,7 @@ counter=0
                 filename=$map[${line%%,*}]
                 echo -en $filename\t >> $output_file
             fi
-            sed -e 's/,/\t/g' "$line" >> $output_file
+            echo "$line" | sed -e 's/,/\t/g' >> $output_file
         done < $input_dir/Complete_summary.csv
 
 # header="Sequence\tName\tGlobal ID\tID\tRegion index\tStart\tEnd\t"
