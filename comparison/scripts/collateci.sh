@@ -24,13 +24,13 @@ counter=0
 
         while read line
         do
-            if [ $counter -eq 1 ]
+            if [ $counter -eq 0 ]
             then
-                $filename=$map[${line%%'\t'*}]
-                echo -en $filename\t >> {output}
-            elif [ $counter -eq 0 ]
                 echo -en Filename\t >> {output}
                 counter=1
+            else
+                $filename=$map[${line%%'\t'*}]
+                echo -en $filename\t >> {output}
             fi
             sed -e 's/,/\t/g' "$line" >> {output}
         done < $input_dir

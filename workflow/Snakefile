@@ -121,7 +121,7 @@ rule cidentify:
         while read line
         do
             filename=$(basename $line .fna)
-            sequences=$(grep '^>' $line | sed -e 's/>//g' -e 's/[ ,,]/_/g')
+            sequences=$(grep '^>' $line | sed -e 's/>//g' -e 's/[ ,,,.]/_/g')
             mkdir -p results/cidentify/$filename
             for sequence in $sequences
             do
