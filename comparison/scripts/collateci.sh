@@ -15,7 +15,7 @@ output_file=${3:-"results/cidentify.tsv"}
 > "$output_file"
 
 counter=0
-        > {output}
+        > $output_file
         declare -A map
         while read line
         do
@@ -26,13 +26,13 @@ counter=0
         do
             if [ $counter -eq 0 ]
             then
-                echo -en Filename\t >> {output}
+                echo -en Filename\t >> $output_file
                 counter=1
             else
                 $filename=$map[${line%%'\t'*}]
-                echo -en $filename\t >> {output}
+                echo -en $filename\t >> $output_file
             fi
-            sed -e 's/,/\t/g' "$line" >> {output}
+            sed -e 's/,/\t/g' "$line" >> $output_file
         done < $input_dir/Complete_summary.csv
 
 # header="Sequence\tName\tGlobal ID\tID\tRegion index\tStart\tEnd\t"
