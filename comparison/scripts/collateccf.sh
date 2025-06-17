@@ -41,7 +41,7 @@ do
     foldername=$(basename $folder)
     while read line
     do
-        if [$counter -eq 0]
+        if [ $counter -eq 0 ]
         then
             echo -en "Filename\t" >> $output_file_cas
             echo -en "Filename\t" >> $output_file_crispr
