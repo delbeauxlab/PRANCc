@@ -39,7 +39,7 @@ counter=0
 for folder in $input_dir/*/
 do
     foldername=$(basename $folder)
-    while read line
+    while IFS="\n" read line
     do
         if [ $counter -eq 0 ]
         then
@@ -49,13 +49,13 @@ do
         else
             echo -en "$foldername\t" >> $output_file_cas
         fi
-        echo -e $line >> $output_file_cas
+        echo -e "$line" >> $output_file_cas
     done < $folder/TSV/CRISPR-Cas_summary.tsv
 
     while read line
     do
         echo -en "$foldername\t" >> $output_file_crispr
-        echo -e $line >> $output_file_crispr
+        echo -e "$line" >> $output_file_crispr
     done < $folder/TSV/Crisprs_REPORT.tsv
 
     # sed 1d $folder/TSV/CRISPR-Cas_summary.tsv | while read line
