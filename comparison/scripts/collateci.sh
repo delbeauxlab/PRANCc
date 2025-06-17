@@ -19,7 +19,9 @@ counter=0
 declare -A map
 while read line
 do
-    map[${line%:*}]=${line#*:}
+    sequence=${line%:*}
+    filename={line#*:}
+    map["${line%:*}"]="${line#*:}"
 done < $input_map
 
 echo $map
@@ -31,7 +33,7 @@ while read line
             echo -en "Filename\t" >> $output_file
             counter=1
         else
-            filename=$map[${line%%,*}]
+            filename=${map[${line%%,*}]}
             echo -en "$filename\t" >> $output_file
         fi
         echo "$line" | sed -e 's/,/\t/g' >> $output_file
