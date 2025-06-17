@@ -126,7 +126,7 @@ rule cidentify:
             for sequence in $sequences
             do
                 mv results/cidentify/$sequence results/cidentify/$filename/$sequence
-                echo [$sequence]:$filename >> {output.map}
+                echo $sequence:$filename >> {output.map}
             done
         done < {input.a}
         '''

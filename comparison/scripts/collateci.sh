@@ -26,7 +26,7 @@ counter=0
         do
             if [ $counter -eq 0 ]
             then
-                echo -en Filename\t >> $output_file
+                echo -en "Filename\t" >> $output_file
                 counter=1
             else
                 filename=$map[${line%%,*}]
