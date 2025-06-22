@@ -240,11 +240,10 @@ rule get_versions:
         log = "results/version.log"
     shell:'''
         > {output}
-        echo "PRANCc version 0.2.3-beta"
+        echo "PRANCc version 0.2.4-beta"
         conda --version >> {output}
         conda list -n padloc >> {output}
         conda list -n crisprcasfinder >> {output}
-        conda list -n crispr_identify_env >> {output}
         conda list -n crisprdetect >> {output}
         conda list -n snakemake >> {output}
         cat {input} >> {output}
