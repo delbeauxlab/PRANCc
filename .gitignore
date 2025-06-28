@@ -9,3 +9,5 @@ __pycache__/
 VSWorkspaceState.json
 *.jfm
 .vs/
+/logs
+/upload

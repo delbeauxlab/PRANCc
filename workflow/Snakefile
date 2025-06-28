@@ -27,16 +27,32 @@ rule check_folders:
         out="logs/prancc.log",
         err="logs/prancc.error.log",
     shell: '''
-        mkdir -pv {output} > {log.out} 2> {log.err}
+        mkdir -pv {output} >> {log.out} 2>> {log.out}
         '''
 
 #create list based on seqs in upload directory#
+# also finds any fastas that use '/' to name sequences, copies them to a folder named
+# changed, then edits the originals in upload to replace '/' with '_'
 rule list_inputs:
     input:
         expand("upload/{seq}.fna", seq=SEQS)
     output:
         "input_list.txt"
-    shell: "echo {input} | tr ' ' '\n' > {output}"
+    log:
+        out="logs/prancc.log",
+        err="logs/prancc.error.log",
+    shell: '''
+    echo {input} | tr ' ' '\n' > {output}
+    mkdir -pv changed >> {log.out} 2>> {log.out}
+    echo 
+    while read file
+    do
+        cp $file changed
+        sed -i 's/\//_/g' $file
+        echo $file' has a sequence containing a name with / in it on lines:'
+        grep -hn '/' $file
+    done < <(grep -l '/' upload/*.fna) >> {log.out} 2>> {log.out}
+    '''
 
 #run cctyper generate results#
 rule cctyper:
@@ -59,7 +75,7 @@ rule cctyper:
         do
             filename=$(basename $file .fna)
             cctyper --threads {threads} \
-                $file results/cctyper/$filename > {log.out} 2> {log.err}
+                $file results/cctyper/$filename >> {log.out} 2>> {log.out}
         done < {input.a}
 
         conda list > {output.log}
@@ -95,7 +111,7 @@ rule ccfinder:
                 -in $file \
                 -out $filename \
                 -cas \
-                -cpuM {threads} > {log.out} 2> {log.err}
+                -cpuM {threads} >> {log.out} 2>> {log.out}
             mv $filename results/ccfinder/$filename
         done < {input.a}
         '''
@@ -126,7 +142,7 @@ rule cidentify:
         python bin/cidentify/CRISPRidentify.py \
             --input_folder_multifasta upload \
             --result_folder results/cidentify \
-            --cas True > {log.out} 2> {log.err}
+            --cas True >> {log.out} 2>> {log.out}
         > {output.map}
         while read line
         do
@@ -164,7 +180,7 @@ rule cdetect:
             filename=$(basename $file .fna)
             run-crisprdetect \
                 --input $file \
-                --output results/cdetect/$filename.1_crispr > {log.out} 2> {log.err}
+                --output results/cdetect/$filename.1_crispr >> {log.out} 2>> {log.out}
         done < {input.a}
         '''
 
@@ -180,7 +196,7 @@ rule padloc:
         "results/benchmark/padloc.txt"
     log:
         out="logs/padloc.log",
-        err="logs/padloc.err",
+        err="logs/padloc.error.log",
     threads: 16
     conda:
         "padloc"
@@ -192,7 +208,7 @@ rule padloc:
             padloc --fna $file \
                 --crispr results/cdetect/$filename.1_crispr.gff \
                 --outdir results/padloc/$filename \
-                --cpu {threads} > {log.out} 2> {log.err}
+                --cpu {threads} >> {log.out} 2>> {log.out}
         done < {input.a}
         '''
 
@@ -281,4 +297,4 @@ rule create_tarball:
     log:
         out="logs/prancc.log",
         err="logs/prancc.error.log",
-    shell:"tar -czvf {output} {input} > {log.out} 2> {log.err}"
+    shell:"tar -czvf {output} {input} >> {log.out} 2>> {log.out}"
