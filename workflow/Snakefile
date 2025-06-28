@@ -19,203 +19,162 @@ rule check_folders:
         expand("upload/{seq}.fna", seq=SEQS)
     output:
         directory("results"),
+        directory("results/ccfinder"),
         directory("results/cctyper"),
         directory("results/cidentify"),
+        directory("results/cdetect"),
         directory("results/padloc"),
         directory("results/benchmark"),
     log:
         out="logs/prancc.log",
         err="logs/prancc.error.log",
     shell: '''
-        mkdir -pv {output} >> {log.out} 2>> {log.out}
+        mkdir -pv {output} >> {log.out} 2>> {log.err}
         '''
 
-#create list based on seqs in upload directory#
-# also finds any fastas that use '/' to name sequences, copies them to a folder named
-# changed, then edits the originals in upload to replace '/' with '_'
-rule list_inputs:
+# edit all '/' characters in sequence names to '_' to prevent cidentify errors
+# edit all '@' characters in sequence names to '_' to prevent cctyper errors
+# rename upload directory to clean
+rule check_inputs:
     input:
-        expand("upload/{seq}.fna", seq=SEQS)
+        seq = expand("upload/{seq}.fna", seq=SEQS),
+        dir = "results",
     output:
-        "input_list.txt"
+        expand("clean/{seq}.fna", seq=SEQS)
     log:
         out="logs/prancc.log",
         err="logs/prancc.error.log",
     shell: '''
-    echo {input} | tr ' ' '\n' > {output}
-    mkdir -pv changed >> {log.out} 2>> {log.out}
-    echo 
-    while read file
-    do
-        cp $file changed
-        sed -i 's/\//_/g' $file
-        echo $file' has a sequence containing a name with / in it on lines:'
-        grep -hn '/' $file
-    done < <(grep -l '/' upload/*.fna) >> {log.out} 2>> {log.out}
-    '''
+        sed -i 's/[\/,@]/_/g' {input.seq} 
+        grep -Hn '/' {input.seq} >> {log.out} 2>> {log.err}
+        grep -l '/' {input.seq} >> {output} 2>> {log.err}
+        mv -v upload clean >> {log.out} 2>> {log.err}
+        '''
 
-#run cctyper generate results#
+# run cctyper and output results to directory in results/cctyper named after .fasta
 rule cctyper:
-    input: 
-        a="input_list.txt",
-        b="results",
+    input:
+        "clean/{seq}.fna"
     output:
-        directory(expand("results/cctyper/{seq}/", seq=SEQS)),
-        log = "results/cctyperversion.log",
+        directory("results/cctyper/{seq}")
     benchmark:
-        "results/benchmark/cct.txt"
+        "results/benchmark/cct_{seq}.txt"
     log:
-        out="logs/cctyper.log",
-        err="logs/cctyper.error.log",
-    threads: 16
+        out="logs/cctyper_{seq}.log",
+        err="logs/cctyper_{seq}.error.log",
+    threads: 1
     conda:
         "envs/cctyper.yaml"
-    shell:'''
-        while read file
-        do
-            filename=$(basename $file .fna)
-            cctyper --threads {threads} \
-                $file results/cctyper/$filename >> {log.out} 2>> {log.out}
-        done < {input.a}
-
-        conda list > {output.log}
+    shell: '''
+        cctyper --threads {threads} \
+            {input}.fna {output} >> {log.out} 2>> {log.err}
         '''
-# UserWarning: pkg_resources is deprecated as an API. See https://setuptools
-# .pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for r
-# emoval as early as 2025-11-30. Refrain from using this package or pin to Setupto
-# ols<81.  
-# Will need to fix at some point
 
-#run ccfinder generate results#
+# run ccfinder, output results to directory in results/ccfinder named after .fasta input
+# to avoid bug in ccfinder, I specify a directory in cwd, then later move it
+# seriously if you're reading this and scoffing, just do it. don't try to do it in /tmp/ 
+# or send it directly to results. that really is the bug. any path that isn't a folder
+# that doesn't exist in cwd = error.
 rule ccfinder:
     input:
-        a="input_list.txt",
-        b="results",
+        "clean/{seq}.fna"
     output:
-        directory(expand("results/ccfinder/{seq}/", seq=SEQS))
+        directory("results/ccfinder/{seq}")
     benchmark:
-        "results/benchmark/ccf.txt"
+        "results/benchmark/ccf_{seq}.txt"
     log:
-        out="logs/ccfinder.log",
-        err="logs/ccfinder.error.log",
-    threads: 16
+        out="logs/ccfinder_{seq}.log",
+        err="logs/cctyper_{seq}.error.log",
+    threads: 1
     conda:
-        "crisprcasfinder"
-    shell:'''
-        mkdir -p results/ccfinder
-        while read file
-        do
-            filename=$(basename $file .fna)
-            perl bin/ccfinder/CRISPRCasFinder.pl \
-                -so bin/ccfinder/sel392v2.so \
-                -in $file \
-                -out $filename \
-                -cas \
-                -cpuM {threads} >> {log.out} 2>> {log.out}
-            mv $filename results/ccfinder/$filename
-        done < {input.a}
+        "envs/ccfinder.yaml"
+    shell: '''
+        perl bin/ccfinder/CRISPRCasFinder.pl \
+            -so bin/ccfinder/sel392v2.so \
+            -in {input}.fna \
+            -out {wildcards.seq} \
+            -cas \
+            -cpuM {threads} >> {log.out} 2>> {log.err}
+            mv {wildcards.seq} {output}
         '''
-
-#run cidentify generate results#
+# run cidentify, output results to directory in results/cidentify named after .fasta input
 rule cidentify:
     input:
-        a="input_list.txt",
-        b="results",
+        "clean/{seq}.fna"
     output:
-        directory(expand("results/cidentify/{seq}/", seq=SEQS)),
-        "results/cidentify/Complete_Cas_summary.csv",
-        "results/cidentify/Complete_Cassette_summary.csv",
-        "results/cidentify/Complete_array_dataset.fasta",
-        "results/cidentify/Complete_repeat_dataset.fasta",
-        "results/cidentify/Complete_spacer_dataset.fasta",
-        "results/cidentify/Complete_summary.csv",
-        map="results/cidentify/sequence_map.txt",
+        dir = directory("results/cidentify/{seq}"),
+        "results/cidentify/{seq}/Complete_Cas_summary.csv",
+        "results/cidentify/{seq}/Complete_Cassette_summary.csv",
+        "results/cidentify/{seq}/Complete_array_dataset.fasta",
+        "results/cidentify/{seq}/Complete_repeat_dataset.fasta",
+        "results/cidentify/{seq}/Complete_spacer_dataset.fasta",
+        "results/cidentify/{seq}/Complete_summary.csv",
     benchmark:
-        "results/benchmark/ci.txt"
+        "results/benchmark/ci_{seq}.txt"
     log:
-        out="logs/ci.log",
-        err="logs/ci.error.log",
-    threads: 16
+        out="logs/cidentify_{seq}.log",
+        err="logs/cidentify_{seq}.error.log",
+    threads: 1
     conda:
-        "envs/ci.yml"
-    shell:'''
+        "envs/cidentify.yaml"
+    shell: '''
         python bin/cidentify/CRISPRidentify.py \
-            --input_folder_multifasta upload \
-            --result_folder results/cidentify \
-            --cas True >> {log.out} 2>> {log.out}
-        > {output.map}
-        while read line
-        do
-            filename=$(basename $line .fna)
-            sequences=$(grep '^>' $line | sed -e 's/>//g' -e 's/[ ,,,.]/_/g')
-            mkdir -p results/cidentify/$filename
-            for sequence in $sequences
-            do
-                mv results/cidentify/$sequence results/cidentify/$filename/$sequence
-                echo $sequence:$filename >> {output.map}
-            done
-        done < {input.a}
+        --file {input} \
+        --result_folder {output.dir} \
+        --cas True > {log.out} 2>> {log.err}
         '''
 
-#run cdetect generate results -->.gff used for padloc to run#
+# run cdetect, output results to 3 files in a directory named after input fasta in 
+# results/cdetect. For use in detecting CRISPR-Cas genes with PADLOC
 rule cdetect:
     input:
-        a="input_list.txt",
-        b="results",
+         "clean/{seq}.fna"
     output:
-        expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
-        expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
-        expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
+        dir = directory("results/cdetect/{seq}"),
+        file = "results/cdetect/{seq}/{seq}.1_crispr",
+        "results/cdetect/{seq}/{seq}.1_crispr.gff",
+        "results/cdetect/{seq}/{seq}.1_crispr.fp",
     benchmark:
-        "results/benchmark/cd.txt"
+        "results/benchmark/cd_{seq}.txt"
     log:
-        out="logs/cdetect.log",
-        err="logs/cdetect.error.log",
-    threads: 16
+        out="logs/cdetect_{seq}.log",
+        err="logs/cdetect_{seq}.error.log",
+    threads: 1
     conda:
         "padloc"
-    shell:'''
-        while read file
-        do
-            filename=$(basename $file .fna)
-            run-crisprdetect \
-                --input $file \
-                --output results/cdetect/$filename.1_crispr >> {log.out} 2>> {log.out}
-        done < {input.a}
+    shell: '''
+        run-crisprdetect \
+            --input {input}
+            --output {output.file} >> {log.out} 2>> {log.err}
         '''
 
-#run padloc generate results#
+# run padloc with output from crisprdetect, output results to directory in results/padloc 
+# named after input fasta.
 rule padloc:
     input:
-        a="input_list.txt",
-        b="results",
-        c=expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
+        seq = "clean/{seq}.fna",
+        file = "results/cdetect/{seq}/{seq}.1_crispr.gff",
     output:
-        directory(expand("results/padloc/{seq}/", seq=SEQS))
+        directory("results/padloc/{seq}")
     benchmark:
-        "results/benchmark/padloc.txt"
+        "results/benchmark/padloc_{seq}.txt"
     log:
         out="logs/padloc.log",
         err="logs/padloc.error.log",
-    threads: 16
+    threads: 1
     conda:
         "padloc"
-    shell:'''
-        while read file
-        do
-            filename=$(basename $file .fna)
-            mkdir -p results/padloc/$filename
-            padloc --fna $file \
-                --crispr results/cdetect/$filename.1_crispr.gff \
-                --outdir results/padloc/$filename \
-                --cpu {threads} >> {log.out} 2>> {log.out}
-        done < {input.a}
+    shell: '''
+        padloc --fna {input.seq} \
+                --crispr {input.file} \
+                --outdir {output} \
+                --cpu {threads} >> {log.out} 2>> {log.err}
         '''
 
 #collate results per result step#
 rule collate_cct:
     input:
-        expand("results/cctyper/{seq}/", seq=SEQS)
+        expand("results/cctyper/{seq}", seq=SEQS)
     output:
         "results/cctyper.tsv"
     threads: 1
@@ -223,7 +182,7 @@ rule collate_cct:
 
 rule collateccf:
     input:
-        expand("results/ccfinder/{seq}/", seq=SEQS)
+        expand("results/ccfinder/{seq}", seq=SEQS)
     output:
         "results/ccfcas.tsv",
         "results/ccfcrispr.tsv",
@@ -232,69 +191,182 @@ rule collateccf:
 
 rule collatecidentify:
     input:
-        expand("results/cidentify/{seq}/", seq=SEQS),
-        a="results/cidentify/Complete_summary.csv",
-        map="results/cidentify/sequence_map.txt",
+        expand("results/cidentify/{seq}", seq=SEQS),
     output:
         "results/cidentify.tsv"
     threads: 1
-    shell: "./comparison/scripts/collateci.sh results/cidentify/ {input.map} {output}"
+    shell: "./comparison/scripts/collateci.sh results/cidentify/ {output}"
 
 rule collatepadloc:
     input:
-        expand("results/padloc/{seq}/", seq=SEQS)
+        expand("results/padloc/{seq}", seq=SEQS)
     output:
         "results/padloc.tsv"
     threads: 1
     shell: "./comparison/scripts/collatepadloc.sh results/padloc/ {output}"
 
 #gets the versions of each program run#
+rule get_ccfinder_version:
+    output:
+        "results/ccfver.log"
+    conda:
+        "envs/ccfinder.yaml"
+    shell: '''
+        echo -e "\n -- CRISPRCasFinder environment --\n" > {output}
+        conda list >> {output}
+        '''
+
+rule get_cctyper_version:
+    output:
+        "results/cctver.log"
+    conda:
+        "envs/cctyper.yaml"
+    shell: '''
+        echo -e "\n -- CRISPRCasTyper environment --\n" > {output}
+        conda list >> {output}
+        '''
+
+rule get_cidentify_version:
+    output:
+        "results/civer.log"
+    conda:
+        "envs/cidentify.yaml"
+    shell: '''
+        echo -e "\n -- CRISPRIdentify environment --\n" > {output}
+        conda list >> {output}
+        '''
+
 rule get_versions:
     input:
-        "results/cctyperversion.log"
+        ccf = "results/ccfver.log",
+        cct = "results/cctver.log",
+        ci = "results/civer.log",
     output:
-        log = "results/version.log"
-    shell:'''
-        > {output}
-        echo "PRANCc version 0.2.4-beta"
+        "results/version.log"
+    shell: '''
+        echo "PRANCc version 0.3.0-beta" > {output}
         conda --version >> {output}
+        echo -e "\n -- PADLOC environment --\n" 
         conda list -n padloc >> {output}
-        conda list -n crisprcasfinder >> {output}
+e       echo -e "\n -- CRISPRDetect environment --\n" 
         conda list -n crisprdetect >> {output}
+        echo -e "\n -- snakemake environment --\n" 
         conda list -n snakemake >> {output}
-        cat {input} >> {output}
+        cat {input} {output} >> {output}
     '''
+
+rule cat_benchmarks:
+    input:
+        cct = expand("results/benchmark/cct_{seq}.txt", seq=SEQS),
+        ccf = expand("results/benchmark/ccf_{seq}.txt", seq=SEQS),
+        ci = expand("results/benchmark/ci_{seq}.txt", seq=SEQS),
+        cd = expand("results/benchmark/cd_{seq}.txt", seq=SEQS),
+        padloc = expand("results/benchmark/padloc_{seq}.txt", seq=SEQS),
+    output:
+        cct = "results/benchmark/cct.txt",
+        ccf = "results/benchmark/ccf.txt",
+        ci = "results/benchmark/ci.txt",
+        cd = "results/benchmark/cd.txt",
+        padloc = "results/benchmark/padloc.txt",
+    shell: '''
+        sed -n '1p' {input.cct[0]} > {output.cct}
+        sed '1d' {input.cct} >> {output.cct}
+
+        sed -n '1p' {input.ccf[0]} > {output.ccf}
+        sed '1d' {input.ccf} >> {output.ccf}
+
+        sed -n '1p' {input.ci[0]} > {output.ci}
+        sed '1d' {input.ci} >> {output.ci}
+
+        sed -n '1p' {input.cd[0]} > {output.cd}
+        sed '1d' {input.cd} >> {output.cd}
+
+        sed -n '1p' {input.padloc[0]} > {output.padloc}
+        sed '1d' {input.padloc} >> {output.padloc}
+        '''
+
+rule cat_logs:
+    input:
+        cct = expand("results/logs/cct_{seq}.log", seq=SEQS),
+        ccterror = expand("results/logs/cct_{seq}.error.log", seq=SEQS),
+        ccf = expand("results/logs/ccf_{seq}.log", seq=SEQS),
+        ccferror = expand("results/logs/ccf_{seq}.error.log", seq=SEQS),
+        ci = expand("results/logs/ci_{seq}.log", seq=SEQS),
+        cierror = expand("results/logs/ci_{seq}.error.log", seq=SEQS),
+        cd = expand("results/logs/cd_{seq}.log", seq=SEQS),
+        cderror = expand("results/logs/cd_{seq}.error.log", seq=SEQS),
+        padloc = expand("results/logs/padloc_{seq}.log", seq=SEQS),
+        padlocerror = expand("results/logs/padloc_{seq}.error.log", seq=SEQS),
+    output:
+        cct = "results/logs/cct.log",
+        ccterror = "results/logs/cct.error.log",
+        ccf = "results/logs/ccf.log",
+        ccferror = "results/logs/ccf.error.log",
+        ci = "results/logs/ci.log",
+        cierror = "results/logs/ci.error.log",
+        cd = "results/logs/cd.log",
+        cderror = "results/logs/cd.error.log",
+        padloc = "results/logs/padloc.log",
+        padlocerror = "results/logs/padloc.error.log",
+    shell: '''
+        cat {input.cct} >> {output.cct}
+        cat {input.ccterror} >> {output.ccterror}
+
+        cat {input.ccf} >> {output.ccf}
+        cat {input.ccferror} >> {output.ccferror}
+
+        cat {input.ci} >> {output.ci}
+        cat {input.cierror} >> {output.cierror}
+
+        cat {input.cd} >> {output.cd}
+        cat {input.cderror} >> {output.cderror}
+
+        cat {input.padloc} >> {output.padloc}
+        cat {input.padlocerror} >> {output.padlocerror}
+        '''
 
 #compile into tarball#
 rule create_tarball:
     input:
-        "results/cctyper.tsv",
-        expand("results/cctyper/{seq}/", seq=SEQS),
+        expand("results/cctyper/{seq}", seq=SEQS),
+        expand("results/ccfinder/{seq}", seq=SEQS),
+        expand("results/cidentify/{seq}", seq=SEQS),
+        expand("results/cidentify/{seq}/Complete_Cas_summary.csv", seq=SEQS),
+        expand("results/cidentify/{seq}/Complete_Cassette_summary.csv", seq=SEQS),
+        expand("results/cidentify/{seq}/Complete_array_dataset.fasta", seq=SEQS),
+        expand("results/cidentify/{seq}/Complete_repeat_dataset.fasta", seq=SEQS),
+        expand("results/cidentify/{seq}/Complete_spacer_dataset.fasta", seq=SEQS),
+        expand("results/cidentify/{seq}/Complete_summary.csv", seq=SEQS),
+        expand("results/cdetect/{seq}/{seq}.1_crispr", seq=SEQS),
+        expand("results/cdetect/{seq}/{seq}.1_crispr.gff", seq=SEQS),
+        expand("results/cdetect/{seq}/{seq}.1_crispr.fp", seq=SEQS),
+        expand("results/padloc/{seq}", seq=SEQS),
         "results/ccfcas.tsv",
         "results/ccfcrispr.tsv",
-        expand("results/ccfinder/{seq}/", seq=SEQS),
+        "results/cctyper.tsv",
         "results/cidentify.tsv",
-        expand("results/cidentify/{seq}/", seq=SEQS),
-        expand("results/cdetect/{seq}.1_crispr", seq=SEQS),
-        expand("results/cdetect/{seq}.1_crispr.gff", seq=SEQS),
-        expand("results/cdetect/{seq}.1_crispr.fp", seq=SEQS),
         "results/padloc.tsv",
-        expand("results/padloc/{seq}/", seq=SEQS),
         "results/version.log",
         "results/benchmark/ccf.txt",
         "results/benchmark/cct.txt",
         "results/benchmark/ci.txt",
         "results/benchmark/cd.txt",
         "results/benchmark/padloc.txt",
-        "results/cidentify/Complete_Cas_summary.csv",
-        "results/cidentify/Complete_Cassette_summary.csv",
-        "results/cidentify/Complete_array_dataset.fasta",
-        "results/cidentify/Complete_repeat_dataset.fasta",
-        "results/cidentify/Complete_spacer_dataset.fasta",
-        "results/cidentify/Complete_summary.csv",
+        "results/logs/prancc.log",
+        "result/logs/prancc.error.log",
+        "results/logs/cct.log",
+        "results/logs/cct.error.log",
+        "results/logs/ccf.log",
+        "results/logs/ccf.error.log",
+        "results/logs/ci.log",
+        "results/logs/ci.error.log",
+        "results/logs/cd.log",
+        "results/logs/cd.error.log",
+        "results/logs/padloc.log",
+        "results/logs/padloc.error.log",
     output:
         "results.tar.gz"
-    log:
-        out="logs/prancc.log",
-        err="logs/prancc.error.log",
-    shell:"tar -czvf {output} {input} >> {log.out} 2>> {log.out}"
+    shell: '''
+        tar -czf {output} {input}
+        mv clean upload
+        '''
