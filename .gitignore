@@ -11,3 +11,5 @@ VSWorkspaceState.json
 .vs/
 /logs
 /upload
+/bin
+/tools
