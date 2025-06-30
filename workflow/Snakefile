@@ -117,6 +117,7 @@ rule cidentify:
         --file {input} \
         --result_folder {output.dir} \
         --cas "True" > {log.out} 2>> {log.err}
+        touch {output}
         '''
 
 # run cdetect, output results to 3 files in a directory named after input fasta in 
@@ -187,9 +188,10 @@ rule collatecidentify:
     input:
         expand("results/cidentify/{seq}", seq=SEQS),
     output:
-        "results/cidentify.tsv"
+        "results/cidentify.tsv",
+        "results/cidentify_cas.tsv",
     threads: 1
-    shell: "./comparison/scripts/collateci.sh results/cidentify {output}"
+    shell: "./comparison/scripts/collateci.sh {input} results/cidentify {output}"
 
 rule collatepadloc:
     input:
@@ -349,6 +351,7 @@ rule create_tarball:
         "results/ccfcrispr.tsv",
         "results/cctyper.tsv",
         "results/cidentify.tsv",
+        "results/cidentify_cas.tsv",
         "results/padloc.tsv",
         "results/version.log",
         "results/benchmark/ccf.txt",
@@ -372,5 +375,7 @@ rule create_tarball:
         "results.tar.gz"
     shell:'''
         tar -czf {output} {input}
-        mv clean upload
+        mkdir -p upload
+        mv clean/* upload
+        rm -r clean
         '''

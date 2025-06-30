@@ -32,6 +32,7 @@ echo -e $header >> $output_file
 for file in $input_dir*/*.csv
 do
     filename=$(basename $file '.csv')
+    filename=${filename%_padloc}
     sed -e '1d' -e 's/,/\t/g' $file | while IFS= read line
     do
         echo -en "$filename\t" >> $output_file
