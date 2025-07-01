@@ -34,11 +34,13 @@ rule check_inputs:
             grep -l '/' {input.seq} >> {output} 2>> {log.err}
         fi
         '''
-        #         
-        # grep -Hn '/' {input.seq} >> {log.out} 2>> {log.err}
-        # grep -l '/' {input.seq} >> {output} 2>> {log.err}
-        # grep -Hn '/' upload/GCF_013030075.1_ASM1303007v1_genomic.fna upload/GCF_000350185.1_ASM35018v1_genomic.fna
-
+        # want workflow to work like this: grep to find all problem children sequences
+        # move all of them to a seperate directory clean
+        # move all non-problem children to clean - so left with upload with only problems
+        # run following rules with clean
+        # at end of workflow, move everything but the newly cleaned sequences back to upload
+        # also do this on failure.
+       
 # run cctyper and output results to directory in results/cctyper named after .fasta
 rule cctyper:
     input:
@@ -167,7 +169,7 @@ rule collatecct:
     output:
         "results/cctyper.tsv"
     threads: 1
-    shell: "./comparison/scripts/collatecct.sh results/cctyper/ {output}"
+    shell: "./workflow/scripts/collatecct.sh results/cctyper/ {output}"
 
 rule collateccf:
     input:
@@ -176,7 +178,7 @@ rule collateccf:
         "results/ccfcas.tsv",
         "results/ccfcrispr.tsv",
     threads: 1
-    shell: "./comparison/scripts/collateccf.sh {input} {output}"
+    shell: "./workflow/scripts/collateccf.sh {input} {output}"
 
 rule collatecidentify:
     input:
@@ -185,7 +187,7 @@ rule collatecidentify:
         "results/cidentify.tsv",
         "results/cidentify_cas.tsv",
     threads: 1
-    shell: "./comparison/scripts/collateci.sh {input} results/cidentify {output}"
+    shell: "./workflow/scripts/collateci.sh {input} results/cidentify {output}"
 
 rule collatepadloc:
     input:
@@ -193,7 +195,7 @@ rule collatepadloc:
     output:
         "results/padloc.tsv"
     threads: 1
-    shell: "./comparison/scripts/collatepadloc.sh results/padloc/ {output}"
+    shell: "./workflow/scripts/collatepadloc.sh results/padloc/ {output}"
 
 #gets the versions of each program run#
 rule get_ccfinder_version:

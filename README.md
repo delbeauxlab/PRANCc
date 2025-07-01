@@ -1,6 +1,6 @@
 # PRANCc
 : a Pipeline Researching AMR, Neisseria spp., and CRISPR correlations
-v0.3.0-beta
+v0.3.1-beta
 
 Copyright (C) 2023, 2024-2025  Tyler Hall, Samantha J. Webster
 
@@ -11,7 +11,7 @@ This project was started with data from [Pathogenwatch](https://pathogen.watch) 
 We went on to use [NCBI](https://www.ncbi.nlm.nih.gov), as well as the input of [Makarova et al 2018](https://pmc.ncbi.nlm.nih.gov/articles/PMC6636873/) to test efficacy between tools.
 
 ## Installation
-To install, install the prerequisites, or ask your system admin to. comparison/install/awsinstall.sh is how I installed these prereqs, but that script is provided as-is and is Ubuntu/Debian specific. For compatibility reasons, it's best to install this on a clean slate. Due to the HMM model requirements of CRISPRIdentify, this installer will download about 1GB.
+To install, install the prerequisites, or ask your system admin to. workflow/install/awsinstall.sh is how I installed these prereqs, but that script is provided as-is and is Ubuntu/Debian specific. For compatibility reasons, it's best to install this on a clean slate. Due to the HMM model requirements of CRISPRIdentify, this installer will download about 1GB.
 
 ### Installs
 
@@ -38,7 +38,7 @@ To install, install the prerequisites, or ask your system admin to. comparison/i
 
 1. Download and extract this repository 
 1. Make sure the preequisites are installed and ready to use (make sure Conda and Mamba are initialised, particularly!)
-1. Run comparison/install/snakeinstall.sh
+1. Run workflow/install/install_prancc.sh
 1. You're done!
 
 ## Run
