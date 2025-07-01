@@ -74,7 +74,7 @@ rule ccfinder:
     log:
         out="logs/ccfinder_{seq}.log",
         err="logs/ccfinder_{seq}.error.log",
-    threads: 1
+    threads: 16
     conda:
         "envs/ccfinder.yaml"
     shell:'''
