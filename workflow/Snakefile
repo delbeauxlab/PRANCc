@@ -78,11 +78,8 @@ rule ccfinder:
     conda:
         "envs/ccfinder.yaml"
     shell:'''
-        mkdir -p tmp/{wildcards.seq}
-        cd tmp/{wildcards.seq}
-        perl ../../bin/ccfinder/CRISPRCasFinder.pl -so ../../bin/ccfinder/sel392v2.so -in {input} -out ccfinder -cas -cpuM {threads} >> ../../{log.out} 2>> ../../{log.err}
+        perl bin/ccfinder/CRISPRCasFinder.pl -so ../../bin/ccfinder/sel392v2.so -in {input} -out ccfinder -cas -cpuM {threads} >> ../../{log.out} 2>> ../../{log.err}
         mv ccfinder {output}
-        cd ../..
         '''
         # perl bin/ccfinder/CRISPRCasFinder.pl \
         #     -so bin/ccfinder/sel392v2.so \
