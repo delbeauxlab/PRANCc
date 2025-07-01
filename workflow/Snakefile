@@ -13,43 +13,31 @@ rule all:
     input: 
         "results.tar.gz"
 
-#check there are files in upload folder that output directories exist#
-rule check_folders:
-    input:
-        expand("upload/{seq}.fna", seq=SEQS)
-    output:
-        directory("results"),
-        # directory("results/ccfinder"),
-        directory("results/cctyper"),
-        directory("results/cidentify"),
-        # directory("results/cdetect"),
-        directory("results/padloc"),
-        # directory("results/benchmark"),
-    log:
-        out="logs/folders_prancc.log",
-        err="logs/folders_prancc.error.log",
-    shell:'''
-        mkdir -pv {output} >> {log.out} 2>> {log.err}
-        '''
-
 # edit all '/' characters in sequence names to '_' to prevent cidentify errors
 # edit all '@' characters in sequence names to '_' to prevent cctyper errors
 # rename upload directory to clean
 rule check_inputs:
     input:
         seq = expand("upload/{seq}.fna", seq=SEQS),
-        dir = "results",
     output:
         expand("clean/{seq}.fna", seq=SEQS)
     log:
-        out="logs/inputs_prancc.log",
-        err="logs/inputs_prancc.error.log",
+        out="logs/prancc.log",
+        err="logs/prancc.error.log",
     shell:'''
-        mv -v upload/*.fna clean >> {log.out} 2>> {log.err}
+        mkdir -pv clean >> {log.out} 2>> {log.err}
+        cp -v {input.seq} clean >> {log.out} 2>> {log.err}
+        sed -i 's/[/.@]/_/g' {output} >> {log.out} 2>> {log.err}
+        if [ grep -q '/' {input.seq} -eq 0 ]
+        then
+            grep -Hn '/' {input.seq} >> {log.out} 2>> {log.err}
+            grep -l '/' {input.seq} >> {output} 2>> {log.err}
+        fi
         '''
-        #         sed -i 's/[/,@]/_/g' {input.seq} 
+        #         
         # grep -Hn '/' {input.seq} >> {log.out} 2>> {log.err}
         # grep -l '/' {input.seq} >> {output} 2>> {log.err}
+        # grep -Hn '/' upload/GCF_013030075.1_ASM1303007v1_genomic.fna upload/GCF_000350185.1_ASM35018v1_genomic.fna
 
 # run cctyper and output results to directory in results/cctyper named after .fasta
 rule cctyper:
@@ -66,8 +54,9 @@ rule cctyper:
     conda:
         "envs/cctyper.yaml"
     shell:'''
+        mkdir -p results/cctyper
         cctyper --threads {threads} \
-            {input}.fna {output} >> {log.out} 2>> {log.err}
+            {input} {output} >> {log.out} 2>> {log.err}
         '''
 
 # run ccfinder, output results to directory in results/ccfinder named after .fasta input
@@ -89,7 +78,11 @@ rule ccfinder:
     conda:
         "envs/ccfinder.yaml"
     shell:'''
-        perl bin/ccfinder/CRISPRCasFinder.pl -so bin/ccfinder/sel392v2.so -in {input} -out {wildcards.seq} -cas -cpuM {threads} >> {log.out} 2>> {log.err}
+        perl bin/ccfinder/CRISPRCasFinder.pl \
+        -so bin/ccfinder/sel392v2.so \
+        -in {input} -out {wildcards.seq} \
+        -cas \
+        -cpuM {threads} >> {log.out} 2>> {log.err}
         mv {wildcards.seq} {output}
         '''
 # run cidentify, output results to directory in results/cidentify named after .fasta input
@@ -113,6 +106,7 @@ rule cidentify:
     conda:
         "envs/cidentify.yaml"
     shell:'''
+        mkdir -p results/cidentify
         python bin/cidentify/CRISPRidentify.py \
         --file {input} \
         --result_folder {output.dir} \
@@ -159,7 +153,7 @@ rule padloc:
     conda:
         "padloc"
     shell:'''
-        mkdir {output}
+        mkdir -p {output}
         padloc --fna {input.seq} \
         --crispr {input.file} \
         --outdir {output} \
@@ -167,7 +161,7 @@ rule padloc:
         '''
 
 #collate results per result step#
-rule collate_cct:
+rule collatecct:
     input:
         expand("results/cctyper/{seq}", seq=SEQS)
     output:
@@ -182,7 +176,7 @@ rule collateccf:
         "results/ccfcas.tsv",
         "results/ccfcrispr.tsv",
     threads: 1
-    shell: "./comparison/scripts/collateccf.sh results/ccfinder/ {output}"
+    shell: "./comparison/scripts/collateccf.sh {input} {output}"
 
 rule collatecidentify:
     input:
@@ -238,19 +232,21 @@ rule get_versions:
         cct = "results/cctver.log",
         ci = "results/civer.log",
     output:
-        "results/version.log"
+        ver = "results/version.log",
+        temp = "results/version.tmp",
     shell:'''
-        echo "PRANCc version 0.3.0-beta" > {output}
-        conda --version >> {output}
-        echo -e "\n -- PADLOC environment --\n" 
-        conda list -n padloc >> {output}
-        echo -e "\n -- CRISPRDetect environment --\n" 
-        conda list -n crisprdetect >> {output}
-        echo -e "\n -- snakemake environment --\n" 
-        conda list -n snakemake >> {output}
+        echo -e "PRANCc version 0.3.0-beta\n" > {output.temp}
+        conda --version >> {output.temp}
+        echo -e "\n -- PADLOC environment --\n" >> {output.temp}
+        conda list -n padloc >> {output.temp}
+        echo -e "\n -- CRISPRDetect environment --\n" >> {output.temp}
+        conda list -n crisprdetect >> {output.temp}
+        echo -e "\n -- snakemake environment --\n" >> {output.temp}
+        conda list -n snakemake >> {output.temp}
+        cat {output.temp} {input} >> {output.ver}
     '''
-            # cat {input} {output} >> {output}
 
+# concatenate the benchmark and log files
 rule cat_benchmarks:
     input:
         cct = expand("results/benchmark/cct_{seq}.txt", seq=SEQS),
@@ -265,22 +261,20 @@ rule cat_benchmarks:
         cd = "results/benchmark/cd.txt",
         padloc = "results/benchmark/padloc.txt",
     shell:'''
-        touch {output}
+        counter=0
+        if [ $counter -eq 0 ]
+        then
+            echo -e 's\th:m:s\tmax_rss\tmax_vms\tmax_uss\tmax_pss\tio_in\tio_out\tmean_load\tcpu_time' |
+            tee {output} > /dev/null
+            counter=1
+        fi
+
+        sed -se 1d {input.cct} >> {output.cct}
+        sed -se 1d {input.ccf} >> {output.ccf}
+        sed -se 1d {input.ci} >> {output.ci}
+        sed -se 1d {input.cd} >> {output.cd}
+        sed -se 1d {input.padloc} >> {output.padloc}
         '''
-        #         sed -n '1p' {input.cct}[0] > {output.cct}
-        # sed '1d' {input.cct} >> {output.cct}
-
-        # sed -n '1p' {input.ccf}[0] > {output.ccf}
-        # sed '1d' {input.ccf} >> {output.ccf}
-
-        # sed -n '1p' {input.ci}[0] > {output.ci}
-        # sed '1d' {input.ci} >> {output.ci}
-
-        # sed -n '1p' {input.cd}[0] > {output.cd}
-        # sed '1d' {input.cd} >> {output.cd}
-
-        # sed -n '1p' {input.padloc}[0] > {output.padloc}
-        # sed '1d' {input.padloc} >> {output.padloc}
 
 rule cat_logs:
     input:
@@ -294,10 +288,7 @@ rule cat_logs:
         cderror = expand("logs/cdetect_{seq}.error.log", seq=SEQS),
         padloc = expand("logs/padloc_{seq}.log", seq=SEQS),
         padlocerror = expand("logs/padloc_{seq}.error.log", seq=SEQS),
-        folders_prancc = "logs/folders_prancc.log",
-        folders_pranccerror = "logs/folders_prancc.error.log",
-        input_prancc = "logs/inputs_prancc.log",
-        input_pranccerror = "logs/inputs_prancc.error.log",
+
     output:
         cct = "logs/cct.log",
         ccterror = "logs/cct.error.log",
@@ -309,8 +300,6 @@ rule cat_logs:
         cderror = "logs/cd.error.log",
         padloc = "logs/padloc.log",
         padlocerror = "logs/padloc.error.log",
-        prancc = "logs/prancc.log",
-        pranccerror = "logs/prancc.error.log",
     shell:'''
         cat {input.cct} >> {output.cct}
         cat {input.ccterror} >> {output.ccterror}
@@ -326,9 +315,6 @@ rule cat_logs:
 
         cat {input.padloc} >> {output.padloc}
         cat {input.padlocerror} >> {output.padlocerror}
-
-        cat {input.folders_prancc} {input.input_prancc} >> {output.prancc}
-        cat {input.folders_pranccerror} {input.input_pranccerror} >> {output.pranccerror}
         '''
 
 #compile into tarball#
@@ -375,7 +361,4 @@ rule create_tarball:
         "results.tar.gz"
     shell:'''
         tar -czf {output} {input}
-        mkdir -p upload
-        mv clean/* upload
-        rm -r clean
         '''
