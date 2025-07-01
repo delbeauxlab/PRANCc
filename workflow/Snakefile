@@ -82,7 +82,7 @@ rule ccfinder:
         perl bin/ccfinder/CRISPRCasFinder.pl \
             -so bin/ccfinder/sel392v2.so \
             -in {input} \
-            -out ccftemp \
+            -out {wildcards.seq} \
             -cas \
             -cpuM {threads} >> {log.out} 2>> {log.err}
         rm -r ccftemp
