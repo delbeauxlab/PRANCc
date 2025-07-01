@@ -78,15 +78,16 @@ rule ccfinder:
     conda:
         "envs/ccfinder.yaml"
     shell:'''
-        echo "these are the wildcards snakemake is outputting: "{wildcards.seq}
-        perl bin/ccfinder/CRISPRCasFinder.pl \
-            -so bin/ccfinder/sel392v2.so \
+        mkdir -p tmp/{wildcards.seq}
+        cd tmp/{wildcards.seq}
+        perl ../../bin/ccfinder/CRISPRCasFinder.pl \
+            -so ../../bin/ccfinder/sel392v2.so \
             -in {input} \
             -out {wildcards.seq} \
             -cas \
             -cpuM {threads} >> {log.out} 2>> {log.err}
-        rm -r ccftemp
-        mkdir {output}
+        mv {wildcards.seq} {ouput}
+        cd ../..
         '''
         # perl bin/ccfinder/CRISPRCasFinder.pl \
         #     -so bin/ccfinder/sel392v2.so \
