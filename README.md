@@ -1,6 +1,6 @@
 # PRANCc
 : a Pipeline Researching AMR, Neisseria spp., and CRISPR correlations
-v0.2.4-beta
+v0.3.0-beta
 
 Copyright (C) 2023, 2024-2025  Tyler Hall, Samantha J. Webster
 
