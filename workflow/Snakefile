@@ -85,7 +85,7 @@ rule ccfinder:
             -in {input} \
             -out ccfinder \
             -cas \
-            -cpuM {threads} >> {log.out} 2>> {log.err}
+            -cpuM {threads} >> ../../{log.out} 2>> ../../{log.err}
         mv ccfinder {output}
         cd ../..
         '''
