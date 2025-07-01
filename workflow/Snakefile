@@ -78,7 +78,7 @@ rule ccfinder:
     conda:
         "envs/ccfinder.yaml"
     shell:'''
-        perl bin/ccfinder/CRISPRCasFinder.pl -so ../../bin/ccfinder/sel392v2.so -in {input} -out ccfinder -cas -cpuM {threads} >> ../../{log.out} 2>> ../../{log.err}
+        perl bin/ccfinder/CRISPRCasFinder.pl -so bin/ccfinder/sel392v2.so -in {input} -out ccfinder -cas -cpuM {threads} >> {log.out} 2>> {log.err}
         mv ccfinder {output}
         '''
         # perl bin/ccfinder/CRISPRCasFinder.pl \
