@@ -29,10 +29,10 @@ To install, install the prerequisites, or ask your system admin to. comparison/i
 
 * Linux
 * Conda
-* Mamba (I recommend installing Miniforge which includes both Conda and Mamba. You can find it at https://github.com/conda-forge/miniforge)
+* Mamba
+   * (I recommend installing Miniforge which includes both Conda and Mamba. You can find it at https://github.com/conda-forge/miniforge)
 * Snakemake
 * build-essential (or your Linux flavour of `make`, if not installed by default)
-* unzip
  
 ### Setup
 
