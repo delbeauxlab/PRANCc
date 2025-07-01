@@ -27,7 +27,8 @@ tar -xzvf v1.1.0.tar.gz -C prancc/bin/cidentify/tools/CRISPRcasIdentifier/CRISPR
 mv -t prancc/bin/cidentify/tools/CRISPRcasIdentifier/CRISPRcasIdentifier HMM_sets.tar.gz trained_models.tar.gz
 rm release-4.3.2.tar.gz v1.2.1.tar.gz v1.1.0.tar.gz
 
-conda init
+source ~/miniconda3/etc/profile.d/conda.sh
+
 # create a new environment based on the ccf.environment.yml file
 conda env create -f prancc/bin/ccfinder/ccf.environment.yml -n crisprcasfinder
 

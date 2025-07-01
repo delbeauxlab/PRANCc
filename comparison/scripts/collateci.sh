@@ -1,64 +1,38 @@
 #!/bin/bash
+args=( "$@" )
 
-# Directory containing text files
-# input_dir="../../results/crispridentifyresults"
-input_dir=${1:-"results/cidentify"}
-
-# Input map file to map multifastas
-input_map=${2:-"results/cidentify/sequence_map.txt"}
-
-# Output TSV file
-# output_file="../../results/ciresults.tsv"
-output_file=${3:-"results/cidentify.tsv"}
+input_dir=${args[-3]}
+output_file_array=${args[-2]}
+output_file_cas=${args[-1]}
+unset "args[-1]"
+unset "args[-1]"
+unset "args[-1]"
 
 # Clear the output file if it already exists
-> "$output_file"
+> "$output_file_array"
+> "$output_file_cas"
 
-counter=0
-> $output_file
-declare -A map
-while read line
+echo -en "Filename\t" >> $output_file_array
+echo -en "Filename\t" >> $output_file_cas
+sed -n '1p' "${args[0]}/Complete_summary.csv" |
+    sed  's/,/\t/g' >> $output_file_array
+sed -n '1p' "${args[0]}/Complete_Cas_summary.csv" |
+    sed 's/,/\t/g' >> $output_file_cas
+
+for folder in $input_dir/*/
 do
-    sequence=${line%:*}
-    filename={line#*:}
-    map["${line%:*}"]="${line#*:}"
-done < $input_map
-
-while read line
+    foldername=$(basename $folder)
+    array_file="$folder/Complete_summary.csv"
+    cas_file="$folder/Complete_Cas_summary.csv"
+    # sed two commands, delete first line then replace all ',' with '\t' then pipe to loop
+    sed -e '1d' -e 's/,/\t/g' $array_file | while IFS= read line
     do
-        if [ $counter -eq 0 ]
-        then
-            echo -en "Filename\t" >> $output_file
-            counter=1
-        else
-            filename=${map[${line%%,*}]}
-            echo -en "$filename\t" >> $output_file
-        fi
-        echo "$line" | sed -e 's/,/\t/g' >> $output_file
-    done < $input_dir/Complete_summary.csv
-    
-
-# header="Sequence\tName\tGlobal ID\tID\tRegion index\tStart\tEnd\t"
-# header+="Length\tConsensus repeat\tRepeat Length\tAverage Spacer Length\t"
-# header+="Number of spacers\tStrand\tCategory\tScore"
-
-# echo -e $header >> $output_file
-
-# total_sequences=0
-# total_spacers=0
-
-# for folder in $input_dir/*/
-# do
-#     foldername=$(basename $folder)
-#     file="$folder/Complete_summary.csv"
-#     # check if it exists
-#     if [ -f $file ]
-#     then
-#         # sed two commands, delete first line then replace all ',' with '\t' then pipe to loop
-#         sed -e '1d' -e 's/,/\t/g' $file | while IFS= read line
-#         do
-#             echo -en "$foldername\t" >> $output_file
-#             echo -e "$line" >> $output_file
-#         done
-#     fi
-# done
+        echo -en "$foldername\t" >> $output_file_array
+        echo -e "$line" >> $output_file_array
+    done
+    sed -e '1d' -e 's/,/\t/g' $cas_file | while IFS= read line
+    do
+        echo -en "$foldername\t" >> $output_file_cas
+        echo -e "$line" >> $output_file_cas
+    done
+done

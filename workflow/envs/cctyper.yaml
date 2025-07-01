@@ -5,3 +5,4 @@ channels:
   - russel88
 dependencies:
   - cctyper=1.8.*
+  - setuptools<81

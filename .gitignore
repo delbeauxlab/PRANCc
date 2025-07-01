@@ -9,3 +9,10 @@ __pycache__/
 VSWorkspaceState.json
 *.jfm
 .vs/
+/logs
+/upload
+/bin
+/tools
+dag.pdf
+results.tar.gz
+/clean
