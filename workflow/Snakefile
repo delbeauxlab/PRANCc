@@ -78,9 +78,9 @@ rule ccfinder:
     conda:
         "envs/ccfinder.yaml"
     shell:'''
-        echo "these are the wildcardssnakemake is outputting: "{wildcards.seq}
+        echo "these are the wildcards snakemake is outputting: "{wildcards.seq}
         
-        touch {output}/test.txt
+        mkdir {output}
         touch {log}
         '''
         # perl bin/ccfinder/CRISPRCasFinder.pl \
