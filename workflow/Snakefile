@@ -80,8 +80,6 @@ rule ccfinder:
     shell:'''
         echo "these are the wildcards snakemake is outputting: "{wildcards.seq}
         perl bin/ccfinder/CRISPRCasFinder.pl -so bin/ccfinder/sel392v2.so -in {input} -out ccftemp -cas -cpuM {threads} >> {log.out} 2>> {log.err}
-        mv ccftemp {output}
-        mkdir -p {output}
         '''
         # perl bin/ccfinder/CRISPRCasFinder.pl \
         #     -so bin/ccfinder/sel392v2.so \
@@ -90,6 +88,7 @@ rule ccfinder:
         #     -cas \
         #     -cpuM {threads} >> {log.out} 2>> {log.err}
 # mv {wildcards.seq} {output}
+# mv ccftemp {output}
 
 # run cidentify, output results to directory in results/cidentify named after .fasta input
 rule cidentify:
