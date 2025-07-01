@@ -78,15 +78,16 @@ rule ccfinder:
     conda:
         "envs/ccfinder.yaml"
     shell:'''
-        echo {wildcards.seq}
+        echo perl bin/ccfinder/CRISPRCasFinder.pl \
+            -so bin/ccfinder/sel392v2.so \
+            -in {input} \
+            -out {wildcards.seq} \
+            -cas \
+            -cpuM {threads} >> {log.out} 2>> {log.err}
+        
         touch {output}
-    '''
-        # perl bin/ccfinder/CRISPRCasFinder.pl \
-        # -so bin/ccfinder/sel392v2.so \
-        # -in {input} -out {wildcards.seq} \
-        # -cas \
-        # -cpuM {threads} >> {log.out} 2>> {log.err}
-        # mv {wildcards.seq} {output}
+        '''
+# mv {wildcards.seq} {output}
 
 # run cidentify, output results to directory in results/cidentify named after .fasta input
 rule cidentify:
