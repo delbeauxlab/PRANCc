@@ -90,6 +90,7 @@ rule ccfinder:
         perl bin/ccfinder/CRISPRCasFinder.pl -so bin/ccfinder/sel392v2.so -in {input} -out ccfinder -cas -cpuM {threads} >> {log.out} 2>> {log.err}
         mkdir -p {output}
         cp -a /ccfinder/. {output}
+        rm -r ccfinder
         '''
 
 # run cidentify, output results to directory in results/cidentify named after .fasta input
