@@ -83,16 +83,22 @@ rule ccfinder:
     log:
         out="logs/ccfinder_{seq}.log",
         err="logs/ccfinder_{seq}.error.log",
-    threads: 4
-    resources: 
-        n_ccfinder=1
+    threads: 1
+    shadow:
+        "full"
     conda:
         "envs/ccfinder.yaml"
     shell:'''
-        perl bin/ccfinder/CRISPRCasFinder.pl -so bin/ccfinder/sel392v2.so -in {input} -out ccfinder -cas -cpuM {threads} >> {log.out} 2>> {log.err}
+        perl bin/ccfinder/CRISPRCasFinder.pl \
+            -so bin/ccfinder/sel392v2.so \
+            -in {input} \
+            -out ccfinder \
+            -cas \
+            -cpuM {threads}
         mkdir -p {output}
         cp -a ccfinder/. {output}
         rm -r ccfinder
+        touch {logs}
         '''
 
 # run cidentify, output results to directory in results/cidentify named after .fasta input
