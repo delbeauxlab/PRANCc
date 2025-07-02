@@ -89,7 +89,7 @@ rule ccfinder:
     shell:'''
         perl bin/ccfinder/CRISPRCasFinder.pl -so bin/ccfinder/sel392v2.so -in {input} -out ccfinder -cas -cpuM {threads} >> {log.out} 2>> {log.err}
         mkdir -p {output}
-        cp -a /ccfinder/. {output}
+        cp -a ccfinder/. {output}
         rm -r ccfinder
         '''
 
