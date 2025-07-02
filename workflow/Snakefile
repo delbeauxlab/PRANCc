@@ -98,7 +98,7 @@ rule ccfinder:
         mkdir -p {output}
         cp -a ccfinder/. {output}
         rm -r ccfinder
-        touch {logs}
+        touch {log}
         '''
 
 # run cidentify, output results to directory in results/cidentify named after .fasta input
