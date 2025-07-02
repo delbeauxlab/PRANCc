@@ -76,13 +76,14 @@ rule ccfinder:
         "clean/{seq}.fna"
     output:
         directory("results/ccfinder/{seq}")
-    shadow: "shallow"
     benchmark:
         "results/benchmark/ccf_{seq}.txt"
     log:
         out="logs/ccfinder_{seq}.log",
         err="logs/ccfinder_{seq}.error.log",
-    threads: 1
+    threads: 4
+    resources: 
+        n_ccfinder=1
     conda:
         "envs/ccfinder.yaml"
     shell:'''
