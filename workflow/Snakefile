@@ -94,7 +94,7 @@ rule ccfinder:
             -in {input} \
             -out ccfinder \
             -cas \
-            -cpuM {threads}
+            -cpuM {threads} >> {log.out} 2>> {log.err}
         mkdir -p {output}
         cp -a ccfinder/. {output}
         rm -r ccfinder
