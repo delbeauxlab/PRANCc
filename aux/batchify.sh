@@ -6,6 +6,8 @@
 # takes a single directory as input and generates a number of output directories each
 # containing [NUM_BATCHES] fastas in [INPUT_DIR] and a list of the files in [INPUT_DIR]
 # and what batch folder they were copied to
+#
+# uses bsd tar from a mac, hence removing mac-specific headers
 #########
 
 input_dir=${1}
@@ -25,4 +27,10 @@ do
     cp $fasta $input_dir/$value
     echo -e $(basename $fasta) '\t' $value >> $input_dir/batches.tsv
     counter=$(($counter+1))
+done
+for number in $(seq 1 $num_batches)
+do
+    value=$(printf "%02d" $number)
+    tar --disable-copyfile --no-xattrs -czf $value.tar.gz $input_dir/$value/*.fasta
+    rm -r $input_dir/$value
 done

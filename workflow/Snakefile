@@ -66,13 +66,6 @@ rule cctyper:
 # seriously if you're reading this and scoffing, just do it. don't try to do it in /tmp/ 
 # or send it directly to resultshttps://github.com/delbeauxlab/PRANCc.git. that really is the bug. any path that isn't a folder
 # that doesn't exist in cwd = error.
-
-# note also ccfinder does not play nice when it's run in parallel: {threads} has to 
-# be greater than the cores used to run conda - if multiple are run in parallel it *may*
-# attempt to concatenate multiple sequence results, duplicating the number of cas genes found
-# if any names over lap, it crashes with error code 25. this is due to the developer
-# generating intermediate files in cwd instead of directly in output file
-# no way to fix outside of fixing original program 
 rule ccfinder:
     input:
         "clean/{seq}.fasta"
@@ -251,7 +244,7 @@ rule get_versions:
         ver = "results/version.log",
         temp = "results/version.tmp",
     shell:'''
-        echo -e "PRANCc version 0.3.0-beta\n" > {output.temp}
+        echo -e "PRANCc version 0.3.1-beta\n" > {output.temp}
         conda --version >> {output.temp}
         echo -e "\n -- PADLOC environment --\n" >> {output.temp}
         conda list -n padloc >> {output.temp}
