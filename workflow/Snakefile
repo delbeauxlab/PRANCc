@@ -244,7 +244,7 @@ rule get_versions:
         ver = "results/version.log",
         temp = "results/version.tmp",
     shell:'''
-        echo -e "PRANCc version 0.3.1-beta\n" > {output.temp}
+        echo -e "PRANCc version 0.3.2-beta\n" > {output.temp}
         conda --version >> {output.temp}
         echo -e "\n -- PADLOC environment --\n" >> {output.temp}
         conda list -n padloc >> {output.temp}
@@ -273,16 +273,45 @@ rule cat_benchmarks:
         counter=0
         if [ $counter -eq 0 ]
         then
-            echo -e 's\th:m:s\tmax_rss\tmax_vms\tmax_uss\tmax_pss\tio_in\tio_out\tmean_load\tcpu_time' |
+            echo -e 'Accession\tFilename\ts\th:m:s\tmax_rss\tmax_vms\tmax_uss\tmax_pss\tio_in\tio_out\tmean_load\tcpu_time' |
             tee {output} > /dev/null
             counter=1
         fi
 
-        sed -se 1d {input.cct} >> {output.cct}
-        sed -se 1d {input.ccf} >> {output.ccf}
-        sed -se 1d {input.ci} >> {output.ci}
-        sed -se 1d {input.cd} >> {output.cd}
-        sed -se 1d {input.padloc} >> {output.padloc}
+        for file in {input.cct}
+        do
+            filename=$(basename $file .fna)
+            echo -en ${{filename%_!(*.*)_genomic}} '\t' $filename '\t' >> {output.cct}
+            sed 1d $file >> {output.cct}
+        done
+
+        for file in {input.ccf}
+        do
+            filename=$(basename $file .fna)
+            echo -en ${{filename%_!(*.*)_genomic}} '\t' $filename '\t' >> {output.ccf}
+            sed 1d $file >> {output.ccf}
+        done
+
+        for file in {input.ci}
+        do
+            filename=$(basename $file .fna)
+            echo -en ${{filename%_!(*.*)_genomic}} '\t' $filename '\t' >> {output.ci}
+            sed 1d $file >> {output.ci}
+        done
+
+        for file in {input.cd}
+        do
+            filename=$(basename $file .fna)
+            echo -en ${{filename%_!(*.*)_genomic}} '\t' $filename '\t' >> {output.cd}
+            sed 1d $file >> {output.cd}
+        done
+
+        for file in {input.padloc}
+        do
+            filename=$(basename $file .fna)
+            echo -en ${{filename%_!(*.*)_genomic}} '\t' $filename '\t' >> {output.padloc}
+            sed 1d $file >> {output.padloc}
+        done
         '''
 
 rule cat_logs:
