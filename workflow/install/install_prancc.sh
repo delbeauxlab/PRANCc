@@ -1,13 +1,21 @@
 #!/bin/bash
 
-# need to have already installed:
-# conda
-# mamba
-# snakemake (conda create -n snakemake -c conda-forge -c bioconda snakemake)
+###########
+# install_prancc.sh
+# ./prancc/workflow/install/awsinstall.sh
+#
+# prereqs: build-essentials, unzip, conda, mamba, snakemake
+# see workflow/install/awsinstall.sh for more details
 
-# need to have run:
-# sudo apt-get update
-# sudo apt-get install build-essentials
+# a simple installer to download trained models and HMM sets for crispridentify/crisprcasidentifier
+# as well as install crisprcasfinder/crispridentify and create needed conda environments
+# installs conda environments: crisprcasfinder, padloc, crisprdetect
+# will throw errors if you already have conda environments of those names
+# 
+# installs: gdown
+#
+# runs crisprcasidentifier to initialise it for crispridentify, sends output to /dev/null
+###########
 
 pip install gdown
 
@@ -27,10 +35,8 @@ tar -xzvf v1.1.0.tar.gz -C prancc/bin/cidentify/tools/CRISPRcasIdentifier/CRISPR
 mv -t prancc/bin/cidentify/tools/CRISPRcasIdentifier/CRISPRcasIdentifier HMM_sets.tar.gz trained_models.tar.gz
 rm release-4.3.2.tar.gz v1.2.1.tar.gz v1.1.0.tar.gz
 
-source ~/miniconda3/etc/profile.d/conda.sh
-
 # create a new environment based on the ccf.environment.yml file
-conda env create -f prancc/bin/ccfinder/ccf.environment.yml -n crisprcasfinder
+conda env create -f prancc/bin/ccfinder/ccf.environment.yml -n crisprcasfinder -y
 
 conda activate crisprcasfinder
 # using mamba, install macysyfinder 2.1.2
@@ -40,7 +46,7 @@ macsydata install -u CASFinder==3.1.0
 
 conda deactivate
 # install padloc
-conda create -n padloc -c conda-forge -c bioconda -c padlocbio padloc=2.0.0
+conda create -n padloc -c conda-forge -c bioconda -c padlocbio padloc=2.0.0 -y
 # Activate the environment
 conda activate padloc
 # Download the latest database
@@ -49,3 +55,10 @@ padloc --db-update
 install-crisprdetect
 
 conda deactivate
+
+conda create -f prancc/bin/cidentify/environment.yml -n crispridentifytemp -y
+cd prancc/bin/cidentify/tools/CRISPRcasIdentifier/CRISPRcasIdentifier/
+conda activate crispridentifytemp
+python CRISPRcasIdentifier.py -f ../../../../../test/dummy.fasta -st dna -sc complete -o /dev/null
+cd ../../../../../..
+conda remove -n crispridentifytemp --all
