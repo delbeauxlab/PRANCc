@@ -23,6 +23,9 @@ source "${HOME}/conda/etc/profile.d/conda.sh"
 # For mamba support also run the following command
 source "${HOME}/conda/etc/profile.d/mamba.sh"
 
+conda init
+mamba shell init
+
 conda activate
 conda create -n snakemake -c conda-forge -c bioconda snakemake -y
 
