@@ -66,7 +66,7 @@ conda deactivate
 conda env create -f prancc/bin/cidentify/environment.yml -y
 cd prancc/bin/cidentify/tools/CRISPRcasIdentifier/CRISPRcasIdentifier/
 conda activate crispr_identify_env
-python CRISPRcasIdentifier.py -f ../../../../../upload/GCF_040370845.1_WHO_U_2024_genomic.fasta -st dna -sc complete -o /dev/null
+python CRISPRcasIdentifier.py -f ../../../../../test_data/GCF_900087785.2_WHOG_genomic.fasta -st dna -sc complete -o /dev/null
 cd ../../../../../..
 conda deactivate
 conda remove -n crispr_identify_env --all -y
