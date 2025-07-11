@@ -20,7 +20,7 @@ rule check_inputs:
     input:
         seq = expand("upload/{seq}.fasta", seq=SEQS),
     output:
-        expand("clean/{seq}.fasta", seq=SEQS)
+        temp(expand("clean/{seq}.fasta", seq=SEQS))
     log:
         out="logs/prancc.log",
         err="logs/prancc.error.log",
@@ -64,11 +64,13 @@ rule cctyper:
 # run ccfinder, output results to directory in results/ccfinder named after .fasta input
 # to avoid bug in ccfinder, I specify a directory in cwd, then later move it
 # seriously if you're reading this and scoffing, just do it. don't try to do it in /tmp/ 
-# or send it directly to resultshttps://github.com/delbeauxlab/PRANCc.git. that really is the bug. any path that isn't a folder
+# or send it directly to results. that really is the bug. any path that isn't a folder
 # that doesn't exist in cwd = error.
 rule ccfinder:
     input:
-        "clean/{seq}.fasta"
+        seq = "clean/{seq}.fasta",
+        program = "bin/ccfinder/CRISPRCasFinder.pl",
+        so = "bin/ccfinder/sel392v2.so",
     output:
         directory("results/ccfinder/{seq}")
     benchmark:
@@ -78,20 +80,19 @@ rule ccfinder:
         err="logs/ccfinder_{seq}.error.log",
     threads: 1
     shadow:
-        "full"
+        "minimal"
     conda:
         "envs/ccfinder.yaml"
     shell:'''
-        perl bin/ccfinder/CRISPRCasFinder.pl \
-            -so bin/ccfinder/sel392v2.so \
-            -in {input} \
+        perl {input.program} \
+            -so {input.so} \
+            -in {input.seq} \
             -out ccfinder \
             -cas \
             -cpuM {threads} >> {log.out} 2>> {log.err}
         mkdir -p {output}
         cp -a ccfinder/. {output}
         rm -r ccfinder
-        touch {log}
         '''
 
 # run cidentify, output results to directory in results/cidentify named after .fasta input
