@@ -31,6 +31,8 @@ done
 for number in $(seq 1 $num_batches)
 do
     value=$(printf "%02d" $number)
-    tar --disable-copyfile --no-xattrs -czf $value.tar.gz $input_dir/$value/*.fasta
+    cd $input_dir/$value
+    tar --disable-copyfile --no-xattrs -czvf $input_dir/$value.tar.gz *.fasta
     rm -r $input_dir/$value
 done
+cd
