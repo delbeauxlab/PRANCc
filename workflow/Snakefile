@@ -1,13 +1,27 @@
+configfile: "workflow/config.yaml"
+
 #tell us how you did#
+# configfile gives default setting to shutdown on success
+# override with --config shutdown="never"
 onsuccess:
-    print("Workflow finished, no error")
     shell("echo {log} > success.log")
-    shell("sudo shutdown -h 0")
+    match config["shutdown"]:
+        case "oncomplete":
+            shell("sudo shutdown -h 0")
+        case "onsuccess":
+            shell("sudo shutdown -h 0")
+        case _:
+            print("Workflow finished, no error")
 
 onerror:
-    print("An error occurred")
     shell("echo {log} > failure.log")
-    shell("sudo shutdown -h 0")
+    match config["shutdown"]:
+        case "oncomplete":
+            shell("sudo shutdown -h 0")
+        case "onfailure":
+            shell("sudo shutdown -h 0")
+        case _:
+            print("An error occurred")
 
 #pulls names from seqs in upload folder, assigns list as a variable#
 SEQS = glob_wildcards("upload/{seq}.fasta").seq

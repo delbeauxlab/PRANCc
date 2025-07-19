@@ -1,0 +1,3 @@
+# specify auto shutdown on finish: oncomplete on success or failure, onsuccess for success
+# only, onfailure for failure only, never for no auto shutdown
+shutdown: oncomplete
