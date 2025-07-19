@@ -1,9 +1,13 @@
 #tell us how you did#
 onsuccess:
     print("Workflow finished, no error")
+    shell("echo {log} > success.log")
+    shell("sudo shutdown -h 0")
 
 onerror:
     print("An error occurred")
+    shell("echo {log} > failure.log")
+    shell("sudo shutdown -h 0")
 
 #pulls names from seqs in upload folder, assigns list as a variable#
 SEQS = glob_wildcards("upload/{seq}.fasta").seq
