@@ -263,7 +263,7 @@ rule get_versions:
         ver = "results/version.log",
         temp = "results/version.tmp",
     shell:'''
-        echo -e "PRANCc version 0.3.2-beta\n" > {output.temp}
+        echo -e "PRANCc version 0.3.3-beta\n" > {output.temp}
         conda --version >> {output.temp}
         echo -e "\n -- PADLOC environment --\n" >> {output.temp}
         conda list -n padloc >> {output.temp}
