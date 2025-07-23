@@ -21,11 +21,10 @@ num_fastas=$(ls -1 *.fasta 2>/dev/null | wc -l)
 num_batches=$(( ($num_fastas + $batch_size - 1) / $batch_size ))
 
 counter=0
-cd $input_dir
 echo -e "Filename\tBatch" > $input_dir/batches.tsv
-for fasta in $input_dir/*.fasta
+for fasta in *.fasta
 do
-    value=$(printf "%02d" $(( ($counter % $num_batches) + 1)))
+    value=$(printf "%02d" $(( ($counter % $num_batches) + 1 )))
     echo -e $(basename $fasta) '\t' $value >> $input_dir/batches.tsv
     tar --disable-copyfile --no-xattrs -rvf $value.tar $fasta
     counter=$(($counter+1))
