@@ -17,7 +17,7 @@ cd $input_dir
 
 while read filename batch
 do
-    tar -rvf $batch $filename
+    tar -rvf $batch $filename.tar
 done < <(sed 1d $batch_file)
 
 echo "gzip -v " *.tar
