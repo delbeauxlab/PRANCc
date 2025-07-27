@@ -1,0 +1,24 @@
+name: ngpipe
+channels:
+- conda-forge
+- bioconda
+- defaults
+dependencies:
+- python
+- pyahocorasick
+- networkx
+- matplotlib
+- snakemake
+- Minimap
+- Samtools
+- Shovill
+- pymlst
+- Abricate
+- FastQC
+- QUAST
+- openpyxl
+- multiqc
+- rauth
+- pysam
+- pyfaidx
+- scipy
