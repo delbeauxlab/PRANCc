@@ -22,3 +22,4 @@ dependencies:
 - pysam
 - pyfaidx
 - scipy
+- xlsxwriter
