@@ -35,6 +35,7 @@ ci_header+="Number of spacers\tStrand\tCategory\tScore"
 # list of sheets
 sheets=( "ccfcas" "ccfcrispr" "cctyper" "cidentify" "cidentify_cas" "padloc" )
 
+echo "doing the v2 sheets"
 # Create cidentify_v2.tsv with fixed header row
 for file in $1/*/results/cidentify.tsv
 do
@@ -59,6 +60,7 @@ do
     done < $file
 done
 
+echo "doing the v3 sheets"
 # check for empty entries in third row of every sheet and export _v3.tsv versions
 for prelim_sheet in ${sheets[@]}
 do
@@ -84,3 +86,94 @@ do
         done < $file
     done
 done
+
+echo "doing the v4 sheets"
+# output _v4.tsv versions with country code
+for sheet in ${sheets[@]}
+do
+    for file in $1/*/results/$sheet"_v3.tsv"
+    do
+        path=$(dirname $file)
+        country=$(dirname $path)
+        country=$(basename $country)
+        country=${country#"ng"}
+        country=${country%"results"}
+        sed -n 1p $file | while IFS=$'\t' read filename rest
+        do
+            echo -e "$filename\tcountry\t$rest" > $path/$sheet"_v4".tsv
+        done
+        sed -e 1d $file | while IFS=$'\t' read filename rest
+        do
+            echo -e "$filename\t$country\t$rest" >> $path/$sheet"_v4".tsv
+        done
+    done
+done
+
+echo "doing the version sheets"
+# read version.log and make a sheet versions_v4.tsv
+for file in $1/*/results/version.log
+do
+    path=$(dirname $file)
+    pranccver=""
+    condaver=""
+    padlocver=""
+    snakemakever=""
+    ccfver="4.3.2"
+    cctver="1.8.0"
+    civer="1.2.1"
+    cdver="2.2"
+    while IFS= read line version rest
+    do
+        if [[ $line == "PRANCc version"* ]]
+        then
+            pranccver=${line#"PRANCc version "}
+        elif [[ $line == "conda "* ]]
+        then
+            condaver=${line#"conda "}
+        elif [[ $line == padloc* ]]
+        then 
+            padlocver=$line
+            padlocver=${line#"padloc"}
+            padlocver=$(echo $padlocver | xargs)
+            padlocver=${padlocver%% *}
+        elif [[ $line == "snakemake "* ]]
+        then
+            snakemakever=$line
+            snakemakever=${line#"snakemake"}
+            snakemakever=$(echo $snakemakever | xargs)
+            snakemakever=${snakemakever%% *}
+        fi
+    done < $file
+    verheader="PRANCc version\tConda version\tSnakemake version\tCrisprCasFinder version\t"
+    verheader+="CrisprCasTyper version\tCrisprIdentify version\tCrisprDetect version\t"
+    verheader+="PADLOC version"
+    echo -e $verheader > $path/versions_v4.tsv
+    echo -e "$pranccver\t$condaver\t$snakemakever\t$ccfver\t$cctver\t$civer\t$cdver\t$padlocver" >> $path/versions_v4.tsv
+done
+
+counter=0
+echo "compiling them all together"
+# compiles all of them together end to end to [INPUT_DIRECTORY]/compiled_results/*_compiled_v1.tsv
+for file in $1/*/results/*_v4.tsv
+do
+    if [ $counter -eq 0 ]
+    then
+        path=$(dirname $file)
+        mkdir -p $1/compiled_results
+        for sheet in ${sheets[@]}
+        do
+            sed -n 1p $path/$sheet"_v4.tsv" > $1/compiled_results/$sheet"_compiled_v1.tsv"
+        done
+        sed -n 1p $path/versions_v4.tsv > $1/compiled_results/versions_compiled_v1.tsv
+        counter=1
+    fi
+    sheet=$(basename $file _v4.tsv)
+    sed -e 1d $file >> $1/compiled_results/$sheet"_compiled_v1.tsv"
+done
+
+> $1/compiled_results/ccfcas_compiled_v2.tsv
+
+while IFS=$'\t' read a b c d e f g h i j k l m n o
+do
+    echo -e "$a\t$b\t$c\t$d\t$e\t$f\t$g\t$h\t$i\t$j\t$k\t$l\t$o" >> $1/compiled_results/ccfcas_compiled_v2.tsv
+done < $1/compiled_results/ccfcas_compiled_v1.tsv
