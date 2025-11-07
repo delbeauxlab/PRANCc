@@ -79,10 +79,11 @@ do
         > $path/$prelim_sheet"_v3".tsv
         while IFS=$'\t' read sequence space test rest
         do
-            if [ -n "$test" ]
+            if [[ $test != "0" && -n $test ]]
             then
                 echo -e "$sequence\t$test\t$rest" >> $path/$prelim_sheet"_v3".tsv
             fi
+
         done < $file
     done
 done
