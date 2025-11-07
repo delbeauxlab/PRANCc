@@ -32,9 +32,7 @@ do
             mkdir -p $1/compiled_metadata
             sed -n 1p $file > $1/compiled_metadata/$sheet".csv"
             counter=1
-            echo "This should only run like 9 times"
         fi
         sed -e 1d $file >> $1/compiled_metadata/$sheet".csv"
-        echo "doing $sheet"
     done
 done

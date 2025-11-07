@@ -22,6 +22,7 @@
 #       outputs *_v4.tsv version of all sheets with country code column from name of containing folder
 #       creates *_compiled_v1.tsv versions of all sheets in [INPUT_DIRECTORY]/compiled by joining
 #           all sheets end to end
+#       creates ccfcas_compiled_v2.tsv to trim off some unnecessary fields
 #########
 
 # Erroneous CI prefix to remove
@@ -174,6 +175,7 @@ done
 
 > $1/compiled_results/ccfcas_compiled_v2.tsv
 
+# trimming fields
 while IFS=$'\t' read a b c d e f g h i j k l m n o
 do
     echo -e "$a\t$b\t$c\t$d\t$e\t$f\t$g\t$h\t$i\t$j\t$k\t$l\t$o" >> $1/compiled_results/ccfcas_compiled_v2.tsv
